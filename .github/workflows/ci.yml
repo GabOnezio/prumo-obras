@@ -14,8 +14,6 @@ concurrency:
 
 jobs:
   rust:
-    # Ativa quando o workspace Rust existir (Fase 0)
-    if: ${{ hashFiles('Cargo.toml') != '' }}
     runs-on: ubuntu-24.04
     services:
       postgres:
@@ -53,19 +51,25 @@ jobs:
           cargo audit
 
   ui:
-    if: ${{ hashFiles('ui/package.json') != '' }}
+    # Os passos só rodam quando a pasta ui/ existir. A condição fica em cada passo
+    # porque hashFiles() não é aceita na condição do job.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        if: ${{ hashFiles('ui/package.json') != '' }}
       - uses: actions/setup-node@v4
+        if: ${{ hashFiles('ui/package.json') != '' }}
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: ui/pnpm-lock.yaml
       - run: pnpm -C ui install --frozen-lockfile
+        if: ${{ hashFiles('ui/package.json') != '' }}
       - run: pnpm -C ui lint
+        if: ${{ hashFiles('ui/package.json') != '' }}
       - run: pnpm -C ui test
+        if: ${{ hashFiles('ui/package.json') != '' }}
 
   segredos-e-dados:
     runs-on: ubuntu-24.04

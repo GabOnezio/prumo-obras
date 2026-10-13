@@ -12,8 +12,9 @@ permissions:
 
 jobs:
   build:
-    # Ativa quando o workspace existir. Matriz: servidor Linux, desktop Windows/Linux, Android.
-    if: ${{ hashFiles('Cargo.toml') != '' }}
+    # Matriz: servidor Linux, desktop Windows/Linux, Android.
+    # TODO(Fase 6): este workflow nunca rodou. No Linux, o crate do desktop precisa das
+    # bibliotecas do WebKitGTK antes do `cargo build --workspace`.
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-2022]
