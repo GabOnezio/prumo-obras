@@ -53,7 +53,7 @@ jobs:
       - name: Somas de verificação
         run: cd dist && sha256sum * > SHA256SUMS
       - name: Atestado de proveniência
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*"
       - name: Assinar SHA256SUMS (Sigstore)
