@@ -5,6 +5,7 @@
 #   scripts/db-test.sh referencia    o schema e o seed do engenheiro, sem alteração
 #   scripts/db-test.sh porte         a migração 0001 comparada com a referência
 #   scripts/db-test.sh migracoes     todas as migrações e os testes de db/tests
+#   scripts/db-test.sh paridade      as regras em Rust contra o SQL, com o banco de pé
 #   scripts/db-test.sh sabotagem     estraga o banco de propósito e exige que os testes acusem
 #   scripts/db-test.sh registrar     anota o SHA-256 das migrações novas (não usa banco)
 #
@@ -79,7 +80,7 @@ if [ "$SUITE" = registrar ]; then
   exit 0
 fi
 case "$SUITE" in
-  tudo | referencia | porte | migracoes | sabotagem) ;;
+  tudo | referencia | porte | migracoes | paridade | sabotagem) ;;
   *) falhar "suíte desconhecida: $SUITE" ;;
 esac
 
@@ -249,7 +250,8 @@ suite_porte() {
   rodar_teste prumo_teste_porte db/tests/referencia/numeros.sql
 }
 
-# Banco com todas as migrações, usado como modelo: cada teste roda numa cópia limpa dele.
+# Banco com todas as migrações e o seed fictício, usado como modelo: cada teste roda numa
+# cópia limpa dele.
 MODELO_PRONTO=0
 preparar_modelo() {
   [ "$MODELO_PRONTO" -eq 1 ] && return
@@ -257,12 +259,17 @@ preparar_modelo() {
   novo_banco prumo_teste_modelo
   aplicar_migracoes prumo_teste_modelo
   echo "  aplicadas: $MIGRACOES_APLICADAS; tabelas: $(($(tabelas prumo_teste_modelo) - 1))"
+  if ! sql prumo_teste_modelo -q -1 -f - <db/seed/exemplo.sql >"$SAIDA/seed-exemplo.log" 2>&1; then
+    tail -n 25 "$SAIDA/seed-exemplo.log" >&2
+    falhar "o seed fictício (db/seed/exemplo.sql) não carregou"
+  fi
+  echo "  seed fictício: $(sql prumo_teste_modelo -tAc "select count(*) || ' contratos, ' || (select count(*) from item_revisao where tipo = 'servico') || ' serviços, ' || (select count(*) from evento) || ' eventos' from contrato")"
   MODELO_PRONTO=1
 }
 
 suite_migracoes() {
   local teste
-  passo "migrações: registro, estrutura e isolamento"
+  passo "migrações: registro, seed fictício e testes de db/tests"
   preparar_modelo
   aplicar_migracoes prumo_teste_modelo
   [ "$MIGRACOES_APLICADAS" -eq 0 ] || falhar "aplicar de novo não deveria fazer nada, mas aplicou $MIGRACOES_APLICADAS"
@@ -276,6 +283,29 @@ suite_migracoes() {
     novo_banco prumo_teste_caso prumo_teste_modelo
     rodar_teste prumo_teste_caso "$teste"
   done
+}
+
+# Regras em Rust contra o SQL, mesma entrada e mesmo centavo. Os testes do crate
+# prumo-paridade são #[ignore]: só rodam aqui, com o banco de pé.
+PARIDADES_ESPERADAS=3
+suite_paridade() {
+  local log="$SAIDA/paridade.log" rodados
+  passo "paridade: Rust × SQL, com o banco de pé"
+  preparar_modelo
+  command -v cargo >/dev/null || falhar "sem cargo nesta máquina: a paridade não tem como rodar"
+  novo_banco prumo_teste_paridade prumo_teste_modelo
+  if ! PRUMO_PARIDADE_URL="$URL_BASE/prumo_teste_paridade" CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" \
+    cargo test -p prumo-paridade -- --ignored --nocapture --test-threads=1 >"$log" 2>&1; then
+    tail -n 40 "$log" >&2
+    falhar "paridade Rust × SQL"
+  fi
+  # Com --nocapture a frase do teste sai na mesma linha do nome dele.
+  grep -oE "(valor de item|seed × prévia|contratos sorteados): .*" "$log" | sed 's/^/  /' || true
+  # Um filtro errado rodaria zero testes e "passaria": exige a contagem.
+  rodados="$(grep -E '^test result: ok\. [0-9]+ passed' "$log" | awk '{ s += $4 } END { print s + 0 }')"
+  [ "$rodados" -ge "$PARIDADES_ESPERADAS" ] ||
+    falhar "esperava ao menos $PARIDADES_ESPERADAS testes de paridade, rodaram $rodados"
+  echo "  $rodados testes de paridade passaram"
 }
 
 # Teste dos testes. Um teste que nunca falha não prova nada: cada caso estraga uma proteção
@@ -322,6 +352,14 @@ suite_sabotagem() {
   sabotar isolamento.sql "app_rw apaga a auditoria" "GRANT DELETE ON auditoria TO app_rw"
   sabotar isolamento.sql "app_rw com BYPASSRLS" "ALTER ROLE app_rw BYPASSRLS" "ALTER ROLE app_rw NOBYPASSRLS"
   sabotar isolamento.sql "visão de situação roda como o dono" "ALTER VIEW vw_contrato_situacao SET (security_invoker = false)"
+  sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
+  sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
+  sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"
+  sabotar eventos.sql "linha de medição sem gatilho" "DROP TRIGGER trg_medicao_item_guard ON medicao_item"
+  sabotar eventos.sql "planilha sem o gatilho que confere a distribuição" "DROP TRIGGER trg_revisao_guard ON revisao_orcamento"
+  sabotar eventos.sql "valor de item que ignora o critério do contrato" \
+    "CREATE OR REPLACE FUNCTION fn_valor_item(p_qtd numeric, p_pu numeric, p_criterio criterio_arredondamento)
+       RETURNS numeric LANGUAGE sql IMMUTABLE AS 'SELECT round(p_qtd * p_pu, 2)'"
   echo "  $SABOTAGENS sabotagens aplicadas, $SABOTAGENS percebidas pelos testes"
 }
 
@@ -329,11 +367,13 @@ case "$SUITE" in
   referencia) suite_referencia ;;
   porte) suite_porte ;;
   migracoes) suite_migracoes ;;
+  paridade) suite_paridade ;;
   sabotagem) suite_sabotagem ;;
   tudo)
     suite_referencia
     suite_porte
     suite_migracoes
+    suite_paridade
     suite_sabotagem
     ;;
 esac

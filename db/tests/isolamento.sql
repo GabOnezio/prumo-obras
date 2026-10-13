@@ -73,7 +73,8 @@ RESET ROLE;
 SELECT id AS obra_b     FROM obra     WHERE tenant_id = :b \gset
 SELECT id AS contrato_b FROM contrato WHERE tenant_id = :b \gset
 SELECT id AS medicao_b  FROM medicao  WHERE tenant_id = :b \gset
-SELECT pg_temp.confere('o dono das tabelas enxerga os dois contratos', (SELECT count(*) FROM contrato), 2);
+SELECT pg_temp.confere('o dono das tabelas enxerga os contratos dos dois municípios',
+  (SELECT count(DISTINCT tenant_id) FROM contrato WHERE tenant_id IN (:a, :b)), 2);
 
 SET ROLE app_rw;
 

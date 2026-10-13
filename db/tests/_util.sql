@@ -18,6 +18,27 @@ BEGIN
   RAISE EXCEPTION 'TESTE FALHOU: "%" deveria ter sido bloqueado', p_desc;
 END $$;
 
+-- Como espera_erro, mas exige também o motivo: a mensagem do erro tem que conter o trecho.
+-- É para regra protegida por mais de uma camada, em que outro erro qualquer esconderia a
+-- falta da camada que o teste quer provar.
+CREATE OR REPLACE PROCEDURE pg_temp.espera_erro_com(p_desc text, p_motivo text, p_cmds text[])
+LANGUAGE plpgsql AS $$
+DECLARE c text; v_erro text;
+BEGIN
+  BEGIN
+    FOREACH c IN ARRAY p_cmds LOOP EXECUTE c; END LOOP;
+  EXCEPTION WHEN OTHERS THEN
+    v_erro := SQLERRM;
+  END;
+  IF v_erro IS NULL THEN
+    RAISE EXCEPTION 'TESTE FALHOU: "%" deveria ter sido bloqueado', p_desc;
+  END IF;
+  IF position(lower(p_motivo) IN lower(v_erro)) = 0 THEN
+    RAISE EXCEPTION 'TESTE FALHOU: "%" foi bloqueado por outro motivo (%); esperado: %', p_desc, v_erro, p_motivo;
+  END IF;
+  RAISE NOTICE 'OK, bloqueado | % | %', p_desc, v_erro;
+END $$;
+
 -- Exige que um número seja exatamente o esperado (ao centavo).
 -- É função, e não procedimento, porque o PostgreSQL não aceita subconsulta em argumento de CALL.
 CREATE OR REPLACE FUNCTION pg_temp.confere(p_desc text, p_obtido numeric, p_esperado numeric)
