@@ -50,6 +50,7 @@ SELECT pg_temp.confere_vazio('chave estrangeira entre tabelas com tenant que nã
 
 -- Tabela sem tenant_id só entra aqui de propósito:
 --   tenant             o cadastro dos municípios; tem RLS própria (cada um só lê a sua linha)
+--   config_municipio   uma linha por município: a chave é o próprio tenant
 --   migracao_aplicada  registro das migrações, que a aplicação não acessa
 SELECT pg_temp.confere_vazio('tabela sem tenant_id fora da lista conhecida', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -57,6 +58,14 @@ SELECT pg_temp.confere_vazio('tabela sem tenant_id fora da lista conhecida', $$
      AND c.relname NOT IN ('tenant', 'migracao_aplicada')
      AND NOT EXISTS (SELECT FROM pg_attribute a
                       WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)$$);
+
+-- A IA propõe e o registro guarda. Dado de negócio não pode depender de uma linha desse registro.
+SELECT pg_temp.confere_vazio('tabela que aponta para o registro de decisões de IA', $$
+  SELECT origem.relname FROM pg_constraint k JOIN pg_class origem ON origem.oid = k.conrelid
+   WHERE k.contype = 'f' AND k.confrelid = 'ia_decisao'::regclass$$);
+SELECT pg_temp.confere_vazio('gatilho ou função de regra que lê o registro de decisões de IA', $$
+  SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.prosrc ~* 'ia_decisao' AND p.proname <> 'fn_ia_decisao_guard'$$);
 
 -- Visão comum roda com a permissão do dono e passaria por cima da RLS.
 SELECT pg_temp.confere_vazio('visão que não roda com a permissão de quem consulta', $$
@@ -135,6 +144,11 @@ SELECT pg_temp.confere_vazio('app_rw grava no cadastro de municípios', $$
           OR has_table_privilege('app_rw', c.oid, 'DELETE'))$$);
 
 -- Registros que só crescem: a aplicação lê e acrescenta, nunca altera nem apaga.
+SELECT pg_temp.confere_vazio('app_rw apaga registro que não se apaga', $$
+  SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname IN ('ia_decisao', 'publicacao', 'denuncia', 'config_municipio')
+     AND has_table_privilege('app_rw', c.oid, 'DELETE')$$);
+
 SELECT pg_temp.confere_vazio('app_rw altera ou apaga registro que só cresce', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relname IN ('auditoria', 'medicao_etapa', 'execucao_financeira_ref', 'rdo_etapa', 'rdo_instrucao')

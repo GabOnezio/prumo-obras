@@ -22,6 +22,21 @@ INSERT INTO tenant (id, razao_social, cnpj, uf) VALUES
 SELECT set_config('app.tenant_id', 'e0e0e0e0-0000-0000-0000-000000000001', false),
        set_config('app.usuario', 'seed.exemplo', false);
 
+-- Configuração fictícia do município: os mesmos prazos e limiares da prévia de desktop.
+-- Em produção cada valor vem do regulamento do município e dos contratos; nenhum é padrão do sistema.
+INSERT INTO config_municipio (tenant_id, comissao_medicao_exigida, parecer_aditivo_exigido, aditivo_atencao_pct,
+                              boletim_evidencias_para_concluido, boletim_periodicidade_dias,
+                              prazo_envio_medicao_dias, prazo_analise_fiscal_dias, prazo_comissao_dias,
+                              prazo_atesto_liquidacao_dias, prazo_pagamento_dias, prazos_em_dias_uteis, fechamento_medicao,
+                              previsao_avanco_minimo_pct, previsao_eventos_minimos, previsao_fator_minimo, previsao_fator_maximo,
+                              prazo_resposta_notificacao_dias)
+VALUES ('e0e0e0e0-0000-0000-0000-000000000001', false, true, 90,
+        1, 15,
+        5, 10, 0,
+        5, 30, false, 'ultimo_dia_do_mes',
+        10, 2, 0.50, 3.00,
+        5);
+
 INSERT INTO orgao (id, nome, cnpj, esfera, uf, municipio) VALUES
   ('e0e0e0e0-0000-0000-0000-0000000000a1', 'Secretaria Municipal de Obras de Exemplo', '00000000000102',
    'municipal', 'PR', 'Exemplo');
