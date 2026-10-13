@@ -6,16 +6,17 @@ Princípio: **primeiro o que não pode errar (regras, banco, auditoria), depois 
 
 > Já existe, feito para a prévia de desktop (ADR 0003): o workspace, e em `crates/dominio` o dinheiro com arredondamento por contrato, o valor de evento, a conferência da medição contra o Boletim de Execução e a previsão de término e de pagamento, com 33 testes. Falta todo o resto desta fase: migrações, paridade com o SQL, limites de aditivo, máquinas de estado, RLS, CI.
 >
-> **Andamento em 13/10/2026** (branch `fase-0-fundacao`, plano em `plano-fase-0.md`): toolchain fixada e verificação local; `scripts/db-test.sh` em PostgreSQL 16 real; migração `0001` com o porte provado contra a referência; registro de migrações; papel `app_rw` e teste de isolamento entre dois municípios; seed fictício e testes dos gatilhos de eventos; paridade Rust × SQL; no domínio, aditivo, boletim de medição por quantidade e máquinas de estado. Faltam as migrações `0002` a `0009`. As caixas abaixo só são marcadas quando o item inteiro estiver pronto.
+> **Concluída em 13/10/2026** na branch `fase-0-fundacao`. O que foi testado, o que não foi e o que ficou em aberto está em `relatorio-fase-0.md`; o plano e os achados, em `plano-fase-0.md`.
 
-- [ ] Workspace Rust, `rust-toolchain.toml`, `Cargo.lock`, CI verde (fmt, clippy `-D warnings`, test, audit, deny).
-- [ ] `db/migrations/0001..0009` a partir do schema de referência (ver `06-banco-de-dados.md`) + suíte de invariantes `espera_erro` rodando em Postgres real.
-- [ ] `dominio`: dinheiro/arredondamento por contrato, **valor de evento**, limites art. 125, fator art. 127, estados de medição, diário, aditivo e **Boletim de Execução**. **Testes de paridade Rust × SQL** (mesmo centavo), incluindo `fn_recalcular_eventos`.
-- [ ] `dominio::previsao`: cálculo puro de término e de recebimento, com teste de propriedade (mesma entrada, mesma saída) e teste de que os prazos vêm da configuração.
-- [ ] **Seed fictício com um contrato por eventos e um por quantidade.** O seed de referência não exercita frentes, agrupadores nem eventos; o teste que cobria isso usava dados reais e não está no repositório.
-- [ ] RLS e papel `app_rw` sem `BYPASSRLS`; teste de isolamento entre dois municípios.
-- [ ] `docs/adr/` com as decisões seguintes (tenant = município, UI em TS, Postgres). Já registradas: nome e marca (0001), eventos como forma prioritária (0002).
+- [x] Workspace Rust, `rust-toolchain.toml`, `Cargo.lock`, verificação com fmt, clippy `-D warnings`, test, audit e deny. **Passa em `scripts/ci-local.sh --tudo`. O CI no GitHub não foi executado:** o Actions não inicia nos repositórios privados da conta (ADR 0010).
+- [x] `db/migrations/0001..0009` a partir do schema de referência (ver `06-banco-de-dados.md`) + suíte de invariantes `espera_erro` rodando em Postgres real.
+- [x] `dominio`: dinheiro/arredondamento por contrato, **valor de evento**, limites art. 125, fator art. 127, estados de medição, diário, aditivo e **Boletim de Execução**. **Testes de paridade Rust × SQL** (mesmo centavo), incluindo `fn_recalcular_eventos`.
+- [x] `dominio::previsao`: cálculo puro de término e de recebimento, com teste de propriedade (mesma entrada, mesma saída) e teste de que os prazos vêm da configuração.
+- [x] **Seed fictício com um contrato por eventos e um por quantidade.** O seed de referência não exercita frentes, agrupadores nem eventos; o teste que cobria isso usava dados reais e não está no repositório.
+- [x] RLS e papel `app_rw` sem `BYPASSRLS`; teste de isolamento entre dois municípios.
+- [ ] `docs/adr/` com as decisões seguintes (tenant = município, UI em TS, Postgres). Registradas: nome e marca (0001), eventos como forma prioritária (0002), migrações (0006), tenant = município (0007), paridade (0008), máquinas de estado (0009), verificação local (0010). **Falta:** UI em TypeScript, que é decisão da Fase 1.
 - **Aceite:** reproduzir em Rust os números do seed do engenheiro (escavação 2.929,52; aditivo; boletim nº 3), os valores dos eventos do seed fictício, e passar todos os testes de bloqueio, inclusive as 15 invariantes de `10-execucao-eventos-previsao.md` §9.
+- **Aceite cumprido com duas ressalvas combinadas na aprovação do plano:** das 15 invariantes, 13 estão provadas; a 13 está pela metade (o relatório emitido é imutável, mas "mesmos números na reemissão" depende do gerador de relatórios, da Fase 2) e a 15 (texto com instruções não altera resultado) depende da IA, da Fase 5.
 
 ## Fase 1 — Núcleo contratual e documentos do órgão
 
@@ -25,6 +26,7 @@ Princípio: **primeiro o que não pode errar (regras, banco, auditoria), depois 
 - [ ] P03 cadastro de **pranchas do projeto** com texto do carimbo extraído por código e vínculo manual com a EAP.
 - [ ] Autenticação, perfis, designação, segregação de funções.
 - **Aceite:** ler a planilha e o cronograma reais de uma obra-piloto, bater o total com o edital centavo a centavo, e publicar os eventos com a soma dos eventos igual ao valor da revisão.
+- **Atenção antes de começar a Fase 1:** a última parte desse aceite não se cumpre em contrato com serviço repartido em mais de uma frente. O evento arredonda em cada frente e a planilha arredonda o serviço inteiro, então a soma dos eventos pode diferir do valor da revisão por centavos (questão 36).
 
 ## Fase 2 — Execução por eventos (o coração)
 

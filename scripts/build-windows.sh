@@ -41,7 +41,14 @@ printf '%s\r\n' \
   > "$COPIA/build.cmd"
 
 echo "2/3 Compilando no Windows (log em $COPIA_WIN\\build.log; a primeira vez leva uns 10 minutos)"
+# O log da compilação anterior sai antes: se o Windows não responder, não pode sobrar um
+# "CODIGO_DE_SAIDA=0" antigo dizendo que deu certo.
+rm -f "$COPIA/build.log"
 (cd /mnt/c && cmd.exe /c "$COPIA_WIN\\build.cmd") || true
+if [ ! -f "$COPIA/build.log" ]; then
+  echo "O Windows não rodou a compilação: o cmd.exe não respondeu ao WSL. Nada foi copiado. Tente de novo." >&2
+  exit 1
+fi
 if ! grep -q '^CODIGO_DE_SAIDA=0' "$COPIA/build.log"; then
   echo "A compilação falhou. Fim do log:" >&2
   tail -n 40 "$COPIA/build.log" >&2

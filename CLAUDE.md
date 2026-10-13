@@ -46,7 +46,7 @@ Ver `docs/03-arquitetura.md`. Resumo:
 - Cliente: **Tauri 2** (desktop e celular) + **React + TypeScript + Vite**. A mesma UI também é publicada como web (empresa e cidadão).
 - **O diário de obras da empresa é tela só do app de celular** (ADR 0004): não entra no desktop nem na prévia. Plataformas do app de celular: Android, GrapheneOS, LineageOS, HarmonyOS, Apple e KaiOS (`docs/03-arquitetura.md` §5.1). O app **não pode depender de serviços do Google**.
 - Workspace: `crates/{dominio,aplicacao,infra-pg,api,worker,sync,importacao,relatorios,prestacao-contas,rreia-jev,rreia-gate}`, `apps/{desktop,mobile}`, `ui/{design-system,features}`, `db/{migrations,reference}`.
-- **O que existe hoje:** `crates/dominio` (dinheiro, valor de evento, conferência da medição, previsão, planilha, aditivo, boletim de medição por quantidade e as máquinas de estado em `fluxo`; ADR 0009), `crates/paridade` (só testes: Rust × SQL com o banco de pé, ADR 0008), `crates/demonstracao` (obra fictícia e estado em memória da prévia), `db/migrations` com o seed fictício em `db/seed/exemplo.sql`, e `apps/desktop` (casca Tauri com telas estáticas em `apps/desktop/previa`). A prévia é provisória (`docs/adr/0003-previa-desktop.md`): regra nova entra no `dominio`, nunca no JavaScript nem no `demonstracao`.
+- **O que existe hoje:** `crates/dominio` (dinheiro, valor de evento, conferência da medição, previsão, planilha, aditivo, boletim de medição por quantidade e as máquinas de estado em `fluxo`; ADR 0009), `crates/paridade` (só testes: Rust × SQL com o banco de pé, ADR 0008), `crates/demonstracao` (obra fictícia e estado em memória da prévia), `db/migrations` (`0001` a `0009`, 74 tabelas) com o seed fictício em `db/seed/exemplo.sql` e os testes em `db/tests`, e `apps/desktop` (casca Tauri com telas estáticas em `apps/desktop/previa`). A prévia é provisória (`docs/adr/0003-previa-desktop.md`): regra nova entra no `dominio`, nunca no JavaScript nem no `demonstracao`.
 - Dependências apontam para dentro: `dominio` ← `aplicacao` ← (`infra-pg`, `api`, `worker`…).
 
 ## 4. Banco de dados
@@ -57,7 +57,9 @@ Ver `docs/03-arquitetura.md`. Resumo:
 - Teste novo de banco vai em `db/tests/*.sql` e roda numa cópia limpa do banco migrado. Ao criar uma proteção, acrescente um caso na suíte de sabotagem de `scripts/db-test.sh`.
 - Testes de invariante no estilo `pg_temp.espera_erro` (veja `db/reference/seed_e_testes.sql`): cada regra do domínio tem um teste que **prova o bloqueio** em Postgres real. Prefira `espera_erro_com`, que exige também o motivo: várias regras têm mais de uma camada, e sem o motivo o teste passa com o gatilho certo desligado.
 - Conta que existe no Rust e no SQL ganha teste em `crates/paridade` (`#[ignore]`; roda em `scripts/db-test.sh paridade`).
-- A API define `app.tenant_id` e `app.usuario` em **toda** sessão.
+- A API define `app.tenant_id`, `app.usuario_id` (o id de quem age) e `app.usuario` (o nome, para a auditoria) em **toda** sessão. Sem `app.usuario_id` nenhum ato é registrado.
+- Medição, diário e aditivo só mudam de situação pelo caminho conferido (`medicao_etapa`, `rdo_etapa`, transições do aditivo). Não escreva `UPDATE ... SET status` nesses documentos.
+- Nada lê `previsao_calculo` nem `previsao_evento` para decidir, e nada aponta para `ia_decisao`. `db/tests/estrutura.sql` falha se alguma função, visão ou chave fizer isso.
 
 ## 5. IA (RREIA)
 
@@ -77,7 +79,7 @@ Ver `docs/03-arquitetura.md`. Resumo:
 - Medição, fiscalização e painel abrem na visão por eventos.
 - Ação irreversível: diálogo com consequência escrita e valor.
 
-## 7. Comandos (alvo; crie conforme a Fase 0)
+## 7. Comandos
 
 ```bash
 # já existem:

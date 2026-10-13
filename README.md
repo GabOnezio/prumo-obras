@@ -77,20 +77,22 @@ Veja [`docs/04-ia-borda-rreia.md`](docs/04-ia-borda-rreia.md) e [`RREIA.md`](RRE
 ## Como desenvolver (com o Claude Code)
 
 1. Leia [`CLAUDE.md`](CLAUDE.md) — ele define as regras de ouro e a ordem de construção.
-2. Comece pela **Fase 0** do [roadmap](docs/08-roadmap.md): workspace, migrações e testes de invariante.
+2. A **Fase 0** do [roadmap](docs/08-roadmap.md) (domínio, banco e testes de invariante) está concluída; o que foi e o que não foi testado está em [`docs/relatorio-fase-0.md`](docs/relatorio-fase-0.md). A próxima é a Fase 1.
 3. Cada tarefa termina com a *definição de pronto* do `CLAUDE.md`.
 
 O que já roda:
 
 ```bash
-cargo test -p prumo-dominio -p prumo-demonstracao   # regras e a obra de exemplo
+./scripts/ci-local.sh                              # porteiro antes de cada commit: fmt, clippy e testes
+./scripts/ci-local.sh --tudo                       # workspace inteiro, banco, cargo audit e cargo deny
+./scripts/db-test.sh                               # o banco em PostgreSQL 16 descartável (precisa de Docker):
+                                                   # porte, migrações, paridade Rust × SQL e sabotagem
 ./scripts/build-windows.sh                         # gera o Prumo.exe da prévia e copia para a Área de Trabalho (WSL + Rust no Windows)
 ```
 
-Comandos-alvo (serão criados na Fase 0):
+Ainda não existe (Fase 1 em diante):
 
 ```bash
-cargo test --workspace && ./scripts/db-test.sh
 pnpm -C ui test
 cargo tauri dev
 ```

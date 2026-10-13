@@ -1,5 +1,8 @@
 name: CI
 
+# Os mesmos passos de scripts/ci-local.sh --tudo. Enquanto o GitHub Actions não iniciar nos
+# repositórios privados desta conta, o porteiro é o script local (docs/adr/0010).
+
 on:
   push:
     branches: [main]
@@ -19,36 +22,37 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: obras_test
+          POSTGRES_PASSWORD: descartavel
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/obras_test
+      # scripts/db-test.sh cria e apaga os bancos prumo_teste_* e o papel app_rw neste servidor.
+      PRUMO_PG_URL: postgres://postgres:descartavel@localhost:5432
+      PRUMO_PG_DESCARTAVEL: "1"
     steps:
       - uses: actions/checkout@v4  # TODO: fixar por SHA completo antes da primeira release
-      - uses: dtolnay/rust-toolchain@stable  # TODO: usar a versão de rust-toolchain.toml
-        with:
-          components: rustfmt, clippy
+      - name: Bibliotecas do Tauri (WebKitGTK) e cliente do PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev \
+            build-essential pkg-config postgresql-client
+      # A versão do Rust e os componentes vêm de rust-toolchain.toml.
+      - name: Toolchain fixada
+        run: rustup show active-toolchain
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
-      # Por enquanto só os crates leves. O crate do desktop (Tauri) precisa das bibliotecas
-      # do WebKitGTK no runner. TODO(Fase 0): instalá-las e voltar para --workspace.
-      - run: cargo clippy -p prumo-dominio -p prumo-demonstracao --all-targets -- -D warnings
-      - run: cargo test -p prumo-dominio -p prumo-demonstracao
-      - name: Invariantes do banco (espera_erro) em Postgres real
-        # Ativa quando o script existir (Fase 0)
-        if: ${{ hashFiles('scripts/db-test.sh') != '' }}
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: Banco em PostgreSQL 16 real (porte, migrações, paridade Rust × SQL e sabotagem)
         run: ./scripts/db-test.sh
-      - name: Auditoria de dependências
-        # Ativa quando houver deny.toml com a política de licenças (Fase 0)
-        if: ${{ hashFiles('deny.toml') != '' }}
+      - name: Avisos de segurança e licenças das dependências
         run: |
           cargo install --locked cargo-deny cargo-audit
-          cargo deny check
           cargo audit
+          cargo deny check
 
   ui:
     # Os passos só rodam quando a pasta ui/ existir. A condição fica em cada passo

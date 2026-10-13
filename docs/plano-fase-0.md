@@ -115,25 +115,27 @@ Calculados à mão a partir das entradas de `db/reference/seed_e_testes.sql` (co
 
 ## 5. As 15 invariantes de `docs/10` §9
 
-| # | Invariante | Onde é provada na Fase 0 |
+Como fecharam. "Banco" quer dizer teste de bloqueio em PostgreSQL 16 real, no arquivo indicado de `db/tests/`.
+
+| # | Invariante | Onde está provada |
 |---|---|---|
-| 1 | Evento só é aprovado com boletim emitido por fiscal designado | Banco (`0008`, depende da designação da `0002`) e domínio |
-| 2 | Boletim emitido é imutável | Banco (`0008`) e máquina de estado |
-| 3 | Valor do evento, paridade Rust × SQL | Crate de paridade (etapa 3) |
-| 4 | Soma nas frentes = quantidade contratada | Banco (etapa 3) |
-| 5 | Evento medido não muda | Banco (etapa 3) |
-| 6 | Evento glosado pode voltar | Banco (`0008`) |
-| 7 | Forma de medir não muda depois da primeira medição enviada | Banco (`0007`) |
-| 8 | Linha de base imutável | Banco (`0007`) |
-| 9 | Somas do cronograma | Banco (`0007`) |
-| 10 | Previsão determinística e fora das tabelas oficiais | Domínio (já testado) e banco (`0009`) |
-| 11 | Prazos vêm da configuração | Domínio (já testado) e banco (`0006`) |
-| 12 | Relatório fotográfico só com foto da câmera, hash e vínculo confirmado | Banco (`0008`) |
-| 13 | Relatório emitido imutável e reproduzível | **Metade:** imutável no banco (`0009`). "Mesmos números na reemissão" depende do gerador de relatórios, que é da Fase 2 |
-| 14 | Serviço a mais só entra em aditivo com o item do aditivo | Banco (`0009`) |
+| 1 | Evento só é aprovado com boletim emitido por fiscal designado | Banco: `boletim.sql`. Domínio: `conferir_medicao` e a máquina da medição |
+| 2 | Boletim emitido é imutável | Banco: `boletim.sql` (nem o dono das tabelas altera). Domínio: máquina do boletim |
+| 3 | Valor do evento, paridade Rust × SQL | `crates/paridade`: 121 eventos de contratos sorteados e os 6 do seed |
+| 4 | Soma nas frentes = quantidade contratada | Banco: `eventos.sql` |
+| 5 | Evento medido não muda | Banco: `eventos.sql` |
+| 6 | Evento glosado pode voltar | Banco: `boletim.sql` |
+| 7 | Forma de medir não muda | Banco: `contrato_travas.sql`. Ficou mais restrita: trava quando a planilha fica vigente (questão 41) |
+| 8 | Linha de base imutável | Banco: `cronograma.sql` |
+| 9 | Somas do cronograma | Banco: `cronograma.sql` (todos os eventos, ou 100% de cada grupo) |
+| 10 | Previsão determinística e fora das tabelas oficiais | Domínio (já testado). Banco: `estrutura.sql` e `aditivo_e_extras.sql` |
+| 11 | Prazos vêm da configuração | Domínio (já testado). Banco: `config_e_ia.sql` (nenhuma coluna com padrão; trocar a configuração troca o resultado) |
+| 12 | Relatório fotográfico só com foto da câmera, hash e vínculo confirmado | Banco: `boletim.sql` (foto) e `aditivo_e_extras.sql` (relatório) |
+| 13 | Relatório emitido imutável e reproduzível | **Metade:** imutável no banco (`aditivo_e_extras.sql`). "Mesmos números na reemissão" depende do gerador de relatórios, que é da Fase 2 |
+| 14 | Serviço a mais só entra em aditivo com o item do aditivo | Banco: `aditivo_e_extras.sql` |
 | 15 | Texto com instruções não altera resultado | **Não nesta fase:** depende da IA, que é da Fase 5 |
 
-O aceite que você escreveu pede as 15. Proponho fechar a Fase 0 com 13 provadas, a 13 pela metade e a 15 levada para a Fase 5 (pergunta 7).
+Fechada com 13 provadas, a 13 pela metade e a 15 levada para a Fase 5, como combinado na aprovação.
 
 ## 6. Decisões que proponho
 
@@ -184,15 +186,18 @@ O que apareceu ao rodar o schema de referência de verdade. Tudo conferido em Po
 
 | # | Achado | Efeito | Onde fecha |
 |---|---|---|---|
-| 1 | **Chave estrangeira não passa pela RLS.** O município A gravou um contrato seu apontando para uma obra do município B | A não lê nada de B, mas a linha existe e impede B de apagar a própria obra | `0002`: chave composta com `tenant_id` (questão 35) |
-| 2 | **Evento criado à mão sobrevive.** Com a planilha em rascunho dá para gravar um evento com valor digitado. Se o par agrupador × frente tiver serviço, o banco recalcula ao publicar. Se não tiver, o evento fica com o valor digitado | No teste: planilha de R$ 100,00 e eventos somando R$ 5.100,00. Marcado numa medição, o evento fantasma entra com R$ 0,00, então não gera pagamento, mas aparece na lista com valor inventado | `0008`: ao publicar, só existem os eventos calculados; teste de bloqueio |
-| 3 | **Frente e agrupador podem ser renomeados** com a planilha vigente e evento já medido | Muda o sentido de documento emitido | `0007` (questão 37) |
-| 4 | **A forma de medir do contrato pode ser trocada** com medição em andamento | Era a invariante 7 de `docs/10` §9, já prevista | `0007` |
-| 5 | **Valor inicial, orçamento-base, critério de arredondamento, casas do preço e marca de reforma do contrato podem ser alterados** com a planilha vigente | Muda a base dos limites do art. 125, o fator do art. 127 e o centavo das próximas medições | `0007` (questão 38) |
+| 1 | **Chave estrangeira não passa pela RLS.** O município A gravou um contrato seu apontando para uma obra do município B | A não lê nada de B, mas a linha existe e impede B de apagar a própria obra | **Fechado na `0002`:** o tenant entra em toda chave entre tabelas com tenant; `isolamento.sql` e `estrutura.sql` provam |
+| 2 | **Evento criado à mão sobrevive.** Com a planilha em rascunho dá para gravar um evento com valor digitado. Se o par agrupador × frente tiver serviço, o banco recalcula ao publicar. Se não tiver, o evento fica com o valor digitado | No teste: planilha de R$ 100,00 e eventos somando R$ 5.100,00. Marcado numa medição, o evento fantasma entra com R$ 0,00, então não gera pagamento, mas aparece na lista com valor inventado | **Fechado na `0007`:** evento não se cria, altera nem apaga à mão; `eventos.sql` prova |
+| 3 | **Frente e agrupador podem ser renomeados** com a planilha vigente e evento já medido | Muda o sentido de documento emitido | **Fechado na `0007`**, com a resposta provisória da questão 37; `contrato_travas.sql` prova |
+| 4 | **A forma de medir do contrato pode ser trocada** com medição em andamento | Era a invariante 7 de `docs/10` §9, já prevista | **Fechado na `0007`**; `contrato_travas.sql` prova |
+| 5 | **Valor inicial, orçamento-base, critério de arredondamento, casas do preço e marca de reforma do contrato podem ser alterados** com a planilha vigente | Muda a base dos limites do art. 125, o fator do art. 127 e o centavo das próximas medições | **Fechado na `0007`**, com a resposta provisória da questão 38; `contrato_travas.sql` prova |
 | 6 | **A soma dos eventos pode diferir do valor da planilha** por centavos, quando um serviço é repartido em frentes | Em 8 de 12 contratos sorteados. Não é defeito do porte: é como a referência calcula | Decisão sua (questão 36) |
 | 7 | **Vários bloqueios têm mais de uma camada.** Tirar o gatilho da medição por eventos não mudava o resultado de nenhum teste, porque o gatilho das linhas de serviço barra as mesmas operações por outro motivo | O teste passava sem provar o gatilho que dizia provar | Fechado na etapa 3: os testes de eventos exigem o motivo, e a sabotagem cobre os cinco gatilhos |
 | 8 | **O tipo decimal do Rust arredonda calado** quando o produto não cabe em 28 dígitos | Só com valores fora de qualquer contrato, mas daria centavo diferente do banco sem aviso | Fechado na etapa 3: conta em inteiros, resultado exato ou erro (ADR 0008) |
-| 9 | **"Restabelecimento" não é conferido no banco.** O gatilho do aditivo aceita restabelecer quantidade de um item que nunca foi suprimido, e `fn_limites_aditivos` deixa restabelecimento fora da conta de acréscimos | Um acréscimo lançado como restabelecimento escaparia do limite de 25% | No domínio: fechado na etapa 4 (só devolve o que foi suprimido antes). No banco: `0009`, com teste de bloqueio |
+| 9 | **"Restabelecimento" não é conferido no banco.** O gatilho do aditivo aceita restabelecer quantidade de um item que nunca foi suprimido, e `fn_limites_aditivos` deixa restabelecimento fora da conta de acréscimos | Um acréscimo lançado como restabelecimento escaparia do limite de 25% | **Fechado:** no domínio na etapa 4 e no banco na `0009`; `aditivo_e_extras.sql` prova |
 | 10 | **A revisão seguinte pode não valer "valor anterior + valor do aditivo"**, por arredondamento | Em 3 de 12 contratos sorteados. O limite do art. 125 usa a soma dos aditivos; o valor atual do contrato usa a revisão | Decisão sua (questão 36) |
-| 11 | **No banco de referência qualquer um muda o estado da medição** e "aprovada por" é texto livre | Sem segregação de funções no banco | Domínio: fechado na etapa 4 (ADR 0009). Banco: `0002` (designação) e `0004` (estados e trilha) |
+| 11 | **No banco de referência qualquer um muda o estado da medição** e "aprovada por" é texto livre | Sem segregação de funções no banco | **Fechado:** domínio na etapa 4 (ADR 0009); banco na `0002` (designação) e na `0004` (etapas e trilha); `medicao_fluxo.sql` prova |
+| 12 | **Diário sem trava.** Na referência o diário fechado, o efetivo, as ocorrências e as fotos podiam ser alterados a qualquer momento | "Dia fechado nunca é sobrescrito" era só intenção | **Fechado na `0005`**; `diario.sql` prova |
+| 13 | **Aditivo mudava de situação sem regra**, inclusive direto de rascunho para homologado, e acima do limite legal | O limite do art. 125 era só um aviso | **Fechado na `0009`**; `aditivo_e_extras.sql` prova. O bloqueio não tem exceção (questão 40) |
+| 14 | **Um teste que nunca falha não prova nada.** Três vezes a sabotagem mostrou teste que passava sem provar o que dizia: gatilho com segunda camada por trás, divisão sem caso de meio exato, restrição coberta por gatilho | Falsa segurança | Fechado: testes com o motivo exigido, casos de meio exato na paridade, e 111 sabotagens que os testes têm que perceber |
 

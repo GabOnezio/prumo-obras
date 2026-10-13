@@ -11,11 +11,11 @@
 | Comunicar o que excede a competência do fiscal | art. 117 §2º | Fluxo de escalonamento para gestor/superior com prazo |
 | Apoio do jurídico e controle interno | art. 117 §3º | Perfil de leitura + parecer anexado ao aditivo |
 | Terceiros que assistem o fiscal | art. 117 §4º | Perfil "assistente" **sem** poder de atesto; termo de confidencialidade anexado |
-| Alteração unilateral: acréscimos/supressões | art. 125 | **25%** do valor inicial atualizado; **50%** para reforma de edifício/equipamento (`contrato.reforma`); cálculo em código |
-| Preço de item novo | art. 127 | Fator = proposta ÷ orçamento-base (`fator_art127`) |
+| Alteração unilateral: acréscimos/supressões | art. 125 · `TODO(jurídico)` questão 40 | **25%** do valor inicial atualizado; **50%** para reforma de edifício/equipamento (`contrato.reforma`); cálculo em código |
+| Preço de item novo | art. 127 · `TODO(jurídico)` questão 40 | Fator = proposta ÷ orçamento-base (`fator_art127`) |
 | Recebimento provisório e definitivo (obras) | art. 140, I | Termos detalhados; provisório pelo fiscal, definitivo por servidor/comissão designada |
 | **Prazos de recebimento** | art. 140 §3º | **Configuração por município/contrato** (a lei não fixa dias) |
-| Responsabilidade pela solidez e segurança | art. 140 §6º | Garantia da obra **≥ 5 anos** com contagem e alertas; edital pode prever mais |
+| Responsabilidade pela solidez e segurança | art. 140 §6º · `TODO(jurídico)` | Garantia da obra **≥ 5 anos** com contagem e alertas; edital pode prever mais |
 | Regimes de execução | art. 46 | Enum `regime_execucao` |
 | Medição e pagamento por etapas do cronograma nos regimes de preço global, integral, tarefa, integrada e semi-integrada | art. 46 §9º · `TODO(jurídico)` | Forma de medir **`eventos`** sugerida para esses regimes; aviso quando a forma escolhida contraria o regime; a escolha é humana e fica registrada (ver `10-execucao-eventos-previsao.md` §3) |
 | Formalização do aditivo como condição para executar o acréscimo | art. 132 · `TODO(jurídico)` | Apontamento de serviço a mais guarda data, justificativa e data da formalização; nada é medido antes do aditivo homologado. O sistema não embute prazo |

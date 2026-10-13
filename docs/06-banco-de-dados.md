@@ -141,21 +141,25 @@ relatorio_emitido (contrato_id, tipo{boletim_execucao, planilha_medicao, relator
 13. **`fn_recalcular_eventos` e o cálculo em Rust têm que dar o mesmo centavo.** Entra na suíte de paridade junto com `fn_valor_item`.
 14. **O modelo de eventos da referência não tem teste neste repositório.** `seed_e_testes.sql` não cria frente, agrupador nem evento; o teste que os exercitava usava dados reais e não foi copiado. Como eventos são a forma prioritária, a Fase 0 precisa de seed fictício e de testes de bloqueio para todos os triggers de eventos antes de qualquer outra coisa depender deles.
 
-## 5. Plano de migração
+## 5. As migrações, como ficaram
 
-1. Criar `db/migrations/0001_base.sql` a partir de `reference/schema.sql` **sem** o bloco financeiro da empresa.
-2. `0002_prefeitura_pessoas.sql`: servidor, portaria, designação, empresa, usuário externo.
-3. `0003_fiscalizacao.sql`: ocorrência, notificação, vistoria, recebimento, garantia.
-4. `0004_medicao_fluxo.sql`: novos estados e trilha de aprovação.
-5. `0005_rdo_fluxo.sql`: validação, instruções, retificação.
-6. `0006_publicacao_ia.sql`: publicação, `ia_decisao`, config do município.
-7. `0007_documentos_cronograma.sql`: `documento_orgao`, pranchas e vínculos, cronograma com datas e versões, calendário da obra; enum `forma_acompanhamento` como `('eventos', 'bm')`.
-8. `0008_boletim_execucao.sql`: boletim, linhas, evidências, `foto` unificada, `rdo_servico`, `medicao_evento_analise` e o ajuste do item 9 do §4.
-9. `0009_servico_extra_previsao_relatorios.sql`: `servico_extra`, `previsao_*`, `relatorio_emitido`.
-10. Cada migração tem **testes de invariante** no estilo `espera_erro`, rodados em CI contra Postgres 16 real. As invariantes novas estão listadas em `10-execucao-eventos-previsao.md` §9.
-11. Seed de demonstração **fictício** (município de Exemplo), nunca dados reais. O seed inclui um contrato por eventos e um por quantidade.
+Todas aplicadas e testadas na Fase 0. O que cada uma fez de diferente do plano original está anotado.
 
-A ordem de 0007 a 0009 segue a prioridade do produto: como eventos vêm primeiro, 0007 e 0008 são pré-requisito da Fase 2 do roadmap.
+| Migração | O que traz |
+|---|---|
+| `0001_base` | Porte do schema de referência sem o que é só da construtora (ficam 34 tabelas), mais o papel `app_rw` |
+| `0002_prefeitura_pessoas` | O tenant vira município (com RLS própria); `usuario`, `servidor`, `portaria`, `designacao`, `empresa`, `usuario_externo`; quem age vem da sessão (`app.usuario_id`); **o tenant entra em toda chave estrangeira** (não estava no plano: questão 35) |
+| `0003_fiscalizacao` | `ordem_servico`, `responsabilidade_tecnica`, `garantia_contratual`, `ocorrencia`, `notificacao`, `plano_acao`, `vistoria`, `recebimento`, `garantia_obra` |
+| `0004_medicao_fluxo` | Estados novos da medição; `medicao_etapa` como único caminho para mudar de estado; `execucao_financeira_ref`. **A troca de `ple` por `eventos` veio para cá** (estava na 0007), porque os mesmos gatilhos são reescritos aqui |
+| `0005_rdo_fluxo` | Diário por contrato, com estados e `rdo_etapa`; `rdo_instrucao`; retificação por `rdo.retifica_id` |
+| `0006_publicacao_ia` | `config_municipio` (nenhuma coluna com valor padrão), `ia_decisao`, `publicacao`, `denuncia` |
+| `0007_documentos_cronograma` | `documento_orgao`, `prancha`, `prancha_vinculo`, `cronograma_versao`, `cronograma_evento`, `cronograma_predecessora`, `calendario_obra`; **travas do contrato, das frentes e dos eventos** (não estavam no plano: questões 37 e 38) |
+| `0008_boletim_execucao` | `boletim_execucao` com linhas e evidências, `foto` (no lugar de `rdo_foto`), `rdo_servico`, `medicao_evento_analise`; a aprovação da medição passa a conferir o boletim |
+| `0009_servico_extra_previsao_relatorios` | `pleito`, `servico_extra`, `previsao_calculo`, `previsao_evento`, `relatorio_emitido`; **transições do aditivo e conferência do restabelecimento** (não estavam no plano: achado 9) |
+
+São 74 tabelas ao fim da `0009`. O seed de demonstração (`db/seed/exemplo.sql`) é fictício: município de Exemplo, um contrato por eventos e um por quantidade, com pessoas, designações, cronograma e dois Boletins de Execução emitidos.
+
+Do esboço do §3, ficou para depois: `medicao_item_analise`. A glosa por quantidade usa a tabela `medicao_glosa` da referência, só como registro: medição com glosa por quantidade não é aprovada, volta para a empresa corrigir (questão 42).
 
 ## 6. Como as migrações são aplicadas e provadas
 
@@ -173,7 +177,23 @@ Decisões em `adr/0006-migracoes-sql-com-registro.md` e `adr/0007-tenant-municip
 | `paridade` | As contas em Rust dão o mesmo centavo que o SQL (`crates/paridade`, ADR 0008) |
 | `sabotagem` | Retira uma proteção por vez e exige que o teste correspondente acuse |
 
-- Arquivos de teste: `estrutura.sql` (regras de RLS e do papel `app_rw`, conferidas no catálogo), `isolamento.sql` (dois municípios fictícios) e `eventos.sql` (valores do seed e bloqueio de cada gatilho de eventos). Os próximos entram na mesma pasta, um por assunto.
+- Arquivos de teste, um por assunto, em `db/tests/`:
+
+| Arquivo | Assunto |
+|---|---|
+| `estrutura.sql` | RLS, papel `app_rw`, tenant nas chaves, e o que não pode ler a previsão nem o registro de IA. Conferido no catálogo, sem dado |
+| `isolamento.sql` | Dois municípios fictícios que não se enxergam nem se alteram |
+| `pessoas.sql` | Designação por contrato, função e período |
+| `fiscalizacao.sql` | Ordem de serviço, ocorrência, notificação, vistoria, recebimento |
+| `medicao_fluxo.sql` | Etapas da medição, segregação de funções, liquidação e pagamento |
+| `diario.sql` | Etapas do diário, dia fechado, retificação, instrução do fiscal |
+| `config_e_ia.sql` | Configuração sem padrão, registro de IA, publicação, denúncia |
+| `contrato_travas.sql` | O que não muda depois de a planilha ficar vigente |
+| `cronograma.sql` | Documentos do órgão, linha de base, reprogramação |
+| `eventos.sql` | Valores do seed e gatilhos de eventos |
+| `boletim.sql` | Boletim de Execução, glosa de evento, foto de evidência |
+| `aditivo_e_extras.sql` | Serviço a mais, fluxo do aditivo, previsão, relatório emitido |
+
 - `db/seed/exemplo.sql` é o seed fictício: município de Exemplo, um contrato por eventos (a mesma planilha da prévia de desktop) e um por quantidade. É SQL puro e não guarda valor calculado: o banco calcula.
 - `db/tests/_util.sql` traz os utilitários: `espera_erro` (exige o bloqueio), `espera_erro_com` (exige o bloqueio e o motivo), `confere` e `confere_texto` (exigem o valor exato) e `confere_vazio` (exige que uma consulta não devolva nada).
 - `PRUMO_DB_SAIDA=pasta` guarda a saída completa de cada teste, com o motivo de cada bloqueio. Vale ler: `espera_erro` aceita qualquer erro, inclusive erro de digitação no próprio teste.
