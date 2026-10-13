@@ -1,0 +1,7 @@
+# Preencher com usuários/equipes reais antes de ativar a proteção de branch
+/crates/dominio/        @OWNER-DOMINIO
+/db/migrations/         @OWNER-DOMINIO
+/crates/rreia-gate/     @OWNER-RREIA
+/crates/rreia-jev/      @OWNER-RREIA
+/docs/07-conformidade.md @OWNER-JURIDICO
+/.github/               @OWNER-DOMINIO

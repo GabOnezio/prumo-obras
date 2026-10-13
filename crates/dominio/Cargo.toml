@@ -1,0 +1,11 @@
+[package]
+name = "prumo-dominio"
+description = "Regras do Prumo, puras e sem IO: dinheiro, valor de evento, conferência da medição e previsão"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+chrono.workspace = true
+rust_decimal.workspace = true
+thiserror.workspace = true

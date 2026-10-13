@@ -1,0 +1,35 @@
+# Questões em aberto
+
+O agente de programação **não deve adivinhar** nenhuma destas respostas. Se precisar de uma, registre a suposição como ADR provisório, torne-a **configuração** (`config_municipio`) e avise o autor.
+
+| # | Pergunta | Por que importa | Resposta provisória adotada |
+|---|---|---|---|
+| 1 | **Modelo comercial:** uma instalação por prefeitura (on-prem), SaaS hospedado, ou os dois? | Define tenancy, onde roda a IA e a distribuição | Os dois suportados por configuração; foco inicial on-prem |
+| 2 | **Qual estado/tribunal de contas** é o primeiro cliente? | Cada tribunal tem layout próprio (adaptador) | Nenhum; só PNCP e relatórios genéricos |
+| 3 | **Primeiro município-piloto** e qual obra real? | Importação e homologação precisam de dado real | Município fictício "Exemplo" |
+| 4 | **Prazos e exigências municipais:** comissão de medição obrigatória? prazo de análise do fiscal? prazos de recebimento provisório/definitivo? | A lei remete a regulamento/contrato (art. 140 §3º) | Tudo configurável; padrão: sem comissão de medição |
+| 5 | **Nível de assinatura eletrônica** exigido em medição, boletim de execução, termo e notificação | Define provedor e valor jurídico | Interface plugável; padrão: login + TOTP com carimbo e hash |
+| 6 | **Quem é o dono do schema de referência** e sob qual licença? | Publicar no GitHub exige permissão | Uso interno até confirmar |
+| 7 | **Licença do repositório** (aberta, ex. AGPL-3.0/Apache-2.0, ou proprietária) | Prefeitura e publicação | `LICENSE` pendente |
+| 8 | **UI:** React (padrão proposto) ou outra (Svelte/Solid/Leptos)? | Equipe e manutenção | React + TypeScript |
+| 9 | **Hardware disponível** para a IA no piloto: marca e modelo, memória e tipo, sistema operacional, e se a máquina é **dedicada à IA ou a mesma do banco e da API** | Define o modelo e quais funções IA ligar. Com 16 GB compartilhados o modelo de 8B fica sem folga (`RREIA.md` §3) | Nível R1 (16 GB, sem GPU) como piso; dedicado × compartilhado **sem resposta** |
+| 10 | **iOS é necessário?** | Custo de publicação e testes | **Decidido em 13/10/2026: sim.** O app de celular vai para Android, GrapheneOS, LineageOS, HarmonyOS, Apple e KaiOS (`adr/0004-diario-so-no-celular.md`) |
+| 11 | **Integração com a contabilidade/ERP** do município (qual sistema?) | Execução financeira (empenho/liquidação/pagamento) | Entrada manual/CSV; API depois |
+| 12 | **Marca e nome** do produto; domínio | README, UI, atualizador | **Decidido em 12/10/2026: Prumo**, chamada "Gestão de Obras Públicas", repositório `prumo-obras` (`adr/0001-nome-e-marca.md`). **Pendente:** busca da marca no INPI e escolha do domínio |
+| 13 | **O i9 Obras** é referência de mercado, concorrente ou parceiro? | Cuidado com cópia de interface e de textos | Usado apenas como inspiração de escopo; **não copiar** telas, textos ou marcas |
+| 14 | **O APK `sycrt-debug`** pertence a quem e o que faz? | Pode ter código reaproveitável ou ser outro produto | Não utilizado; nada dele vai ao repositório |
+| 15 | **Em que formato o órgão entrega** planilha, cronograma, eventograma e projeto? (`.xlsx`? só PDF? DWG? IFC? MS Project?) | Define o que o leitor precisa aceitar na primeira versão | Planilha, cronograma e eventograma em `.xlsx`/`.xls`/`.ods`; projeto em PDF com camada de texto; o resto fica guardado como arquivo |
+| 16 | **Boletim de Execução:** o município tem modelo próprio? Qual a periodicidade? Quem assina (um fiscal, ou fiscal técnico e administrativo)? Qual a evidência mínima para marcar "concluído"? | O conteúdo e o fluxo deste documento foram **propostos aqui**, a partir do pedido "boletim de execução de obras em fiscalização" | Um fiscal designado emite; periodicidade e evidência mínima configuráveis; layout próprio do Prumo |
+| 17 | **"Tempos de recebimento":** o pedido é o recebimento **financeiro** (quando o evento vira pagamento), o recebimento **da obra** (termos provisório e definitivo), ou os dois? | Muda o que a tela de previsão destaca | Os dois calculados; o financeiro em destaque, por evento |
+| 18 | **De onde vêm os prazos de processo** em cada município (envio da medição, análise, comissão, atesto e liquidação, pagamento) e se contam em dias úteis ou corridos | São a base da previsão de recebimento | Campos do contrato e de `config_municipio`; sem valor padrão no código |
+| 19 | **Evento com pendência ou parcialmente executado** pode ser pago em parte? | Na referência o evento é medido inteiro quando concluído | Não. Só `concluido` libera pagamento |
+| 20 | **Aditivo que acrescenta quantidade em frente já medida:** vira evento novo (complementar) ou reabre o evento? Como o órgão e o agente financeiro tratam? | Evento medido é imutável no modelo | Evento novo na Rev. N+1 |
+| 21 | **Método de previsão:** ritmo linear por evento e fator de ritmo da obra servem? Quais os limites (avanço mínimo, número mínimo de eventos concluídos, faixa do fator)? | É a fórmula que gera as datas mostradas ao gestor | Método inicial de `10-execucao-eventos-previsao.md` §6.2, a validar com o engenheiro e com dados de uma obra real |
+| 22 | **Quem vê a previsão:** a empresa vê a previsão de recebimento? O cidadão vê a previsão de término? | Risco de a estimativa ser lida como promessa | Gestor e fiscal veem tudo; empresa vê só o recebimento dos seus contratos; cidadão não vê sem decisão do gestor |
+| 23 | `TODO(jurídico)` **Conferir no texto oficial da Lei 14.133:** art. 46 §9º (medição por etapas nos regimes de preço global) e art. 132 (formalização do aditivo antes da execução). Foram citados de memória | Sustentam a prioridade dos eventos e a regra do serviço a mais | Usados só como justificativa na documentação; nenhuma regra de código depende deles ainda |
+| 24 | **A forma de medir pode mudar no meio do contrato?** | Evita medição por duas formas no mesmo contrato | Fixa depois da primeira medição enviada |
+| 25 | **A empresa consulta os diários fechados pelo navegador?** O lançamento é só no celular (ADR 0004) | Define se o portal web da empresa tem uma tela de consulta do diário | Sem resposta. A tela de lançamento não existe fora do celular |
+| 26 | **HarmonyOS NEXT (5 em diante)** entra? Ele não roda APK | Seria um app a mais para construir e manter. `TODO(técnico)`: conferir o suporte atual do Tauri a essa plataforma | Só HarmonyOS até a 4, pelo APK |
+| 27 | **Apple:** quem fornece a máquina macOS, a conta de desenvolvedor e quem publica? "Apple" quer dizer iPhone e iPad? | Sem isso não há build de iOS | Lido como iOS e iPadOS; entra depois do Android |
+| 28 | **KaiOS:** há aparelhos em uso nas empresas contratadas? O que o cliente reduzido precisa fazer (só texto do diário? foto? offline?) e quais versões do sistema atender | Exige um cliente web à parte; a foto de evidência pode não ser possível | Sem plano até haver resposta |
+| 29 | **Como o APK é distribuído e atualizado fora da loja do Google?** (site da prefeitura, loja alternativa, atualização dentro do app) | GrapheneOS, LineageOS e HarmonyOS não usam a Play Store | Download direto do APK assinado, com verificação de assinatura |

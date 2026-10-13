@@ -1,0 +1,156 @@
+<div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1280px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px;">
+      <div>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700;">Console de IA (RREIA)</h1>
+        <div style="color: #5B6B7A;">Prumo IA Local. Cada função liga e desliga sozinha. O sistema continua completo com tudo desligado. Valores abaixo são de exemplo.</div>
+      </div>
+      <button style="font: inherit; font-weight: 700; padding: 10px 16px; border-radius: 6px; border: 1px solid #B3261E; background: #FFFFFF; color: #B3261E; min-height: 44px;">Desligar toda a IA</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+      <div style="background: #FFFFFF; border: 1px solid #DDE3E9; border-radius: 8px; padding: 12px 14px;">
+        <div style="color: #5B6B7A; font-size: 13px;">Modelo carregado</div>
+        <div style="font-size: 18px; font-weight: 700;">Llama 3.1 8B · Q4_K_M</div>
+        <div style="color: #5B6B7A; font-size: 13px;">Licença registrada em docs/modelos.md</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE3E9; border-radius: 8px; padding: 12px 14px;">
+        <div style="color: #5B6B7A; font-size: 13px;">Memória (lei L1)</div>
+        <div style="font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;">7,9 GB de 12 GB permitidos</div>
+        <div style="height: 8px; background: #E8EDF1; border-radius: 4px; margin-top: 6px; overflow: hidden;"><div style="width: 66%; height: 8px; background: #1E7B4F;"></div></div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE3E9; border-radius: 8px; padding: 12px 14px;">
+        <div style="color: #5B6B7A; font-size: 13px;">Fila (lei L4)</div>
+        <div style="font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;">P0: 0 · P1: 2 · P2: 1 · P3: parada</div>
+        <div style="color: #5B6B7A; font-size: 13px;">Lote só roda fora do expediente</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE3E9; border-radius: 8px; padding: 12px 14px;">
+        <div style="color: #5B6B7A; font-size: 13px;">Degradação (lei L5)</div>
+        <div style="font-size: 18px; font-weight: 700; color: #1E7B4F;">Normal</div>
+        <div style="color: #5B6B7A; font-size: 13px;">Temperatura dentro do limite</div>
+      </div>
+    </div>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE3E9; border-radius: 8px; overflow: hidden;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid #DDE3E9; font-weight: 700;">Funções de IA</div>
+      <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; min-width: 880px;">
+          <thead>
+            <tr style="background: #F4F6F8; color: #5B6B7A; font-size: 13px; text-align: left;">
+              <th style="padding: 8px 14px;">Função</th>
+              <th style="padding: 8px 14px;">Onde aparece</th>
+              <th style="padding: 8px 14px;">Classe</th>
+              <th style="padding: 8px 14px;">Respostas válidas</th>
+              <th style="padding: 8px 14px;">Sugestões aceitas</th>
+              <th style="padding: 8px 14px;">Risco</th>
+              <th style="padding: 8px 14px;">Estado</th>
+            </tr>
+          </thead>
+          <tbody style="font-variant-numeric: tabular-nums;">
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-12</strong> Classificar linhas da planilha</td>
+              <td style="padding: 10px 14px;">Importação de planilha</td>
+              <td style="padding: 10px 14px;">P3</td>
+              <td style="padding: 10px 14px;">97%</td>
+              <td style="padding: 10px 14px;">91%</td>
+              <td style="padding: 10px 14px;">Baixo</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E1F2E9; color: #14583A; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Ligada</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-09</strong> Classificar ocorrência</td>
+              <td style="padding: 10px 14px;">Fiscalização</td>
+              <td style="padding: 10px 14px;">P1</td>
+              <td style="padding: 10px 14px;">94%</td>
+              <td style="padding: 10px 14px;">82%</td>
+              <td style="padding: 10px 14px;">Baixo</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E1F2E9; color: #14583A; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Ligada</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-02</strong> Sugerir item da planilha</td>
+              <td style="padding: 10px 14px;">Diário da empresa</td>
+              <td style="padding: 10px 14px;">P0</td>
+              <td style="padding: 10px 14px;">90%</td>
+              <td style="padding: 10px 14px;">76%</td>
+              <td style="padding: 10px 14px;">Médio</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #FFF4DB; color: #8A5A00; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Em teste</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-06</strong> Divergências da medição</td>
+              <td style="padding: 10px 14px;">Análise de medição</td>
+              <td style="padding: 10px 14px;">P1</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;"><strong style="color: #B3261E;">Alto</strong> · afeta pagamento</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E8EDF1; color: #3A4A59; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Desligada: falta parecer jurídico</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-07</strong> Redigir motivo da glosa</td>
+              <td style="padding: 10px 14px;">Análise de medição</td>
+              <td style="padding: 10px 14px;">P1</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;"><strong style="color: #B3261E;">Alto</strong> · afeta pagamento</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E8EDF1; color: #3A4A59; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Desligada: falta parecer jurídico</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-15</strong> Pergunte aos dados</td>
+              <td style="padding: 10px 14px;">Painel do gestor</td>
+              <td style="padding: 10px 14px;">P2</td>
+              <td style="padding: 10px 14px;">92%</td>
+              <td style="padding: 10px 14px;">88%</td>
+              <td style="padding: 10px 14px;">Baixo</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E1F2E9; color: #14583A; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Ligada</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-19</strong> Classificar linhas do cronograma</td>
+              <td style="padding: 10px 14px;">Leitura do cronograma</td>
+              <td style="padding: 10px 14px;">P3</td>
+              <td style="padding: 10px 14px;">95%</td>
+              <td style="padding: 10px 14px;">89%</td>
+              <td style="padding: 10px 14px;">Baixo</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E1F2E9; color: #14583A; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Ligada</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-21</strong> Sugerir agrupador de evento</td>
+              <td style="padding: 10px 14px;">Montagem de eventos</td>
+              <td style="padding: 10px 14px;">P3</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;">Médio</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #FFF4DB; color: #8A5A00; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Em teste</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-22</strong> Indícios de conclusão de evento</td>
+              <td style="padding: 10px 14px;">Boletim de Execução</td>
+              <td style="padding: 10px 14px;">P1</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;">sem medição</td>
+              <td style="padding: 10px 14px;"><strong style="color: #B3261E;">Alto</strong> · afeta pagamento</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E8EDF1; color: #3A4A59; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Desligada: falta parecer jurídico</span></td>
+            </tr>
+            <tr style="border-top: 1px solid #E8EDF1;">
+              <td style="padding: 10px 14px;"><strong>IA-23</strong> Explicar a previsão</td>
+              <td style="padding: 10px 14px;">Previsão</td>
+              <td style="padding: 10px 14px;">P2</td>
+              <td style="padding: 10px 14px;">96%</td>
+              <td style="padding: 10px 14px;">84%</td>
+              <td style="padding: 10px 14px;">Baixo</td>
+              <td style="padding: 10px 14px;"><span style="display: inline-block; background: #E1F2E9; color: #14583A; border-radius: 12px; padding: 3px 10px; font-size: 13px; font-weight: 600;">Ligada</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 10px 16px; border-top: 1px solid #E8EDF1; color: #5B6B7A; font-size: 13px;">Mostrando 10 de 24 funções. Uma função só liga depois de atingir a métrica mínima em um conjunto de teste rotulado por engenheiros (lei LP10). A previsão de prazo e de recebimento não aparece aqui: é cálculo do sistema, não IA.</div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE3E9; border-radius: 8px; padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 12px 32px;">
+      <div style="flex: 1 1 280px;">
+        <div style="font-weight: 700; margin-bottom: 4px;">Política de modelos</div>
+        <div style="font-size: 14px; color: #3A4A59;">Somente modelo local e gratuito. Modelo pago: desligado. Dados saem do aparelho: não.</div>
+      </div>
+      <div style="flex: 1 1 280px;">
+        <div style="font-weight: 700; margin-bottom: 4px;">Rastro (lei L6)</div>
+        <div style="font-size: 14px; color: #3A4A59;">Cada decisão registra quem pediu, função, modelo, confiança e se a pessoa aceitou, editou ou rejeitou. O conteúdo privado não é guardado.</div>
+      </div>
+    </section>
+  </div>

@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "Se usar o conceito RREIA ou este projeto, cite-o."
+title: "Prumo — Gestão de Obras Públicas (com RREIA, Módulo Prefeitura)"
+type: software
+authors:
+  - family-names: Ferreira
+    given-names: Gabriel Onezio
+version: 0.0.0
+date-released: 2026-10-12
+# Preencher: license, repository-code, doi (após depósito no Zenodo)

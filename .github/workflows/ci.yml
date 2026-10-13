@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    # Ativa quando o workspace Rust existir (Fase 0)
+    if: ${{ hashFiles('Cargo.toml') != '' }}
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: obras_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/obras_test
+    steps:
+      - uses: actions/checkout@v4  # TODO: fixar por SHA completo antes da primeira release
+      - uses: dtolnay/rust-toolchain@stable  # TODO: usar a versão de rust-toolchain.toml
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      # Por enquanto só os crates leves. O crate do desktop (Tauri) precisa das bibliotecas
+      # do WebKitGTK no runner. TODO(Fase 0): instalá-las e voltar para --workspace.
+      - run: cargo clippy -p prumo-dominio -p prumo-demonstracao --all-targets -- -D warnings
+      - run: cargo test -p prumo-dominio -p prumo-demonstracao
+      - name: Invariantes do banco (espera_erro) em Postgres real
+        # Ativa quando o script existir (Fase 0)
+        if: ${{ hashFiles('scripts/db-test.sh') != '' }}
+        run: ./scripts/db-test.sh
+      - name: Auditoria de dependências
+        # Ativa quando houver deny.toml com a política de licenças (Fase 0)
+        if: ${{ hashFiles('deny.toml') != '' }}
+        run: |
+          cargo install --locked cargo-deny cargo-audit
+          cargo deny check
+          cargo audit
+
+  ui:
+    if: ${{ hashFiles('ui/package.json') != '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+      - run: pnpm -C ui install --frozen-lockfile
+      - run: pnpm -C ui lint
+      - run: pnpm -C ui test
+
+  segredos-e-dados:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Bloquear arquivos que não podem ir ao repositório
+        run: |
+          if git ls-files | grep -E '\.(apk|aab|keystore|jks|pfx|p12|pem|dump|bak)$'; then
+            echo "Arquivo proibido no repositório"; exit 1
+          fi

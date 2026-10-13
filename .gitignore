@@ -1,0 +1,20 @@
+target/
+# gerado pelo tauri-build a cada compilação
+/apps/desktop/src-tauri/gen/
+node_modules/
+dist/
+.env
+.env.*
+*.apk
+*.aab
+*.keystore
+*.jks
+*.pfx
+*.p12
+*.pem
+*.dump
+*.bak
+# dados reais nunca entram
+/dados-reais/
+*.log
+.DS_Store

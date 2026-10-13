@@ -1,0 +1,16 @@
+[package]
+name = "prumo-demonstracao"
+description = "Dados fictícios e estado em memória da prévia de desktop do Prumo. Não é o sistema: não tem banco, usuário nem trilha"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+chrono.workspace = true
+prumo-dominio = { path = "../dominio" }
+rust_decimal.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

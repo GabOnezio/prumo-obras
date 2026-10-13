@@ -1,0 +1,21 @@
+[package]
+name = "prumo-desktop"
+description = "Prumo para desktop (Tauri 2). Por enquanto, prévia navegável com dados fictícios"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "prumo"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+prumo-demonstracao = { path = "../../../crates/demonstracao" }
+tauri = { version = "2", features = [] }
+
+[features]
+# Ligada no build de produção: a interface vai embutida no executável.
+custom-protocol = ["tauri/custom-protocol"]

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prumo · Prefeitura de Exemplo (prévia)</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="marca">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Brasão do município (espaço reservado)"><path d="M12 3l7 2.5v6c0 4.4-2.9 7.9-7 9.5-4.1-1.6-7-5.1-7-9.5v-6z"/></svg>
+    <div><strong>Prumo</strong> · Prefeitura de Exemplo</div>
+  </div>
+  <span class="selo-previa">Prévia · dados fictícios · nada é gravado</span>
+  <div class="espaco"></div>
+  <div id="usuario"></div>
+</header>
+
+<div class="corpo">
+  <nav class="lateral" aria-label="Telas da prévia">
+    <a href="#/inicio">Sobre esta prévia</a>
+
+    <h2>Planejamento</h2>
+    <a href="#/eventos">Planilha e eventos</a>
+
+    <h2>Fiscalização</h2>
+    <a href="#/boletim">Boletim de Execução</a>
+    <a href="#/medicao">Medição por eventos</a>
+    <a href="#/medicao-bm">Medição por quantidade <span class="marca-desenho">desenho</span></a>
+
+    <h2>Gestão</h2>
+    <a href="#/previsao">Previsão</a>
+    <a href="#/painel">Painel <span class="marca-desenho">desenho</span></a>
+
+    <h2>Administração</h2>
+    <a href="#/console-ia">Console de IA <span class="marca-desenho">desenho</span></a>
+
+    <div class="lateral-rodape">
+      <button type="button" class="btn" data-acao="reiniciar">Reiniciar a demonstração</button>
+    </div>
+  </nav>
+
+  <main id="conteudo" tabindex="-1"></main>
+</div>
+
+<div id="aviso" role="status" aria-live="polite"></div>
+
+<dialog id="confirmar" aria-labelledby="confirmar-titulo">
+  <form method="dialog">
+    <h2 id="confirmar-titulo"></h2>
+    <p id="confirmar-texto"></p>
+    <div class="dialogo-acoes">
+      <button class="btn" value="cancelar">Cancelar</button>
+      <button class="btn btn-primario" id="confirmar-sim" value="confirmar"></button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
