@@ -10,7 +10,7 @@ mod comum;
 
 use comum::{
     conectar, decimal, id, nome_no_banco, sql_das_pessoas, sql_de_aprovar, sql_de_enviar, Sorteio,
-    EMPRESA_ALFA,
+    EMPRESA_ALFA, GESTOR, ORCAMENTISTA,
 };
 use postgres::Client;
 use prumo_dominio::{
@@ -650,13 +650,18 @@ fn aditivo_e_boletim_dao_os_mesmos_numeros_no_rust_e_no_sql() {
             id(9, c, 1)
         );
         sql += &sql_dos_itens(rev1, c, &revisao_1);
+        // O orçamentista envia o aditivo e o gestor, outra pessoa, homologa, com o parecer anexado.
         sql += &format!(
             "UPDATE revisao_orcamento SET status = 'substituida' WHERE id = '{revisao_0}';
              UPDATE revisao_orcamento SET status = 'vigente', data_vigencia = DATE '2026-11-28' WHERE id = '{revisao_1}';
+             SET app.usuario_id = '{ORCAMENTISTA}';
+             UPDATE aditivo SET status = 'enviado' WHERE id = '{aditivo}';
+             SET app.usuario_id = '{GESTOR}';
              UPDATE aditivo SET status = 'homologado', revisao_resultante_id = '{revisao_1}',
+                                parecer_sha256 = repeat('a', 64),
                                 data_assinatura = DATE '2026-11-28', homologado_em = now()
-              WHERE id = '{}';",
-            id(9, c, 1)
+              WHERE id = '{aditivo}';",
+            aditivo = id(9, c, 1)
         );
         banco.batch_execute(&sql).unwrap_or_else(|e| {
             panic!("contrato {c}: o banco recusou a Rev. 1 calculada em Rust: {e}")

@@ -41,6 +41,8 @@ pub const EMPRESA_ALFA: &str = "e0e0e0e0-0000-0000-0000-0000000000e1";
 pub const PREPOSTO: &str = "e0e0e0e0-0000-0000-0001-000000000005";
 pub const FISCAL: &str = "e0e0e0e0-0000-0000-0001-000000000001";
 pub const PORTARIA: &str = "e0e0e0e0-0000-0000-0000-0000000000a9";
+pub const GESTOR: &str = "e0e0e0e0-0000-0000-0001-000000000003";
+pub const ORCAMENTISTA: &str = "e0e0e0e0-0000-0000-0001-000000000008";
 
 /// Põe o preposto e o fiscal do seed num contrato de teste, que tem que ser da empresa Alfa.
 pub fn sql_das_pessoas(contrato: &str) -> String {

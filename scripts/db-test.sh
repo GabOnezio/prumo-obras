@@ -287,7 +287,7 @@ suite_migracoes() {
 
 # Regras em Rust contra o SQL, mesma entrada e mesmo centavo. Os testes do crate
 # prumo-paridade são #[ignore]: só rodam aqui, com o banco de pé.
-PARIDADES_ESPERADAS=8
+PARIDADES_ESPERADAS=9
 suite_paridade() {
   local log="$SAIDA/paridade.log" rodados
   passo "paridade: Rust × SQL, com o banco de pé"
@@ -300,7 +300,7 @@ suite_paridade() {
     falhar "paridade Rust × SQL"
   fi
   # Com --nocapture a frase do teste sai na mesma linha do nome dele.
-  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo|fluxo da medição|fluxo do diário): .*" "$log" | sed 's/^/  /' || true
+  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo|fluxo da medição|fluxo do diário|fluxo do aditivo): .*" "$log" | sed 's/^/  /' || true
   # Um filtro errado rodaria zero testes e "passaria": exige a contagem.
   rodados="$(grep -E '^test result: ok\. [0-9]+ passed' "$log" | awk '{ s += $4 } END { print s + 0 }')"
   [ "$rodados" -ge "$PARIDADES_ESPERADAS" ] ||
@@ -442,6 +442,30 @@ suite_sabotagem() {
   sabotar diario.sql "serviço do dia fechado alterável" "DROP TRIGGER trg_rdo_conteudo_guard ON rdo_servico"
   sabotar diario.sql "serviço do diário de outro contrato" "DROP TRIGGER trg_rdo_servico_guard ON rdo_servico"
   sabotar estrutura.sql "aplicação apaga foto de evidência" "GRANT DELETE ON foto TO app_rw"
+  sabotar aditivo_e_extras.sql "pleito sem regra" "DROP TRIGGER trg_pleito_guard ON pleito"
+  sabotar aditivo_e_extras.sql "serviço a mais sem regra" "DROP TRIGGER trg_servico_extra_guard ON servico_extra"
+  sabotar aditivo_e_extras.sql "aditivo muda de situação sem regra" "DROP TRIGGER trg_aditivo_guard ON aditivo"
+  sabotar aditivo_e_extras.sql "qualquer transição de aditivo é aceita" \
+    "CREATE OR REPLACE FUNCTION fn_transicao_aditivo(p_de status_aditivo, p_para status_aditivo) RETURNS boolean LANGUAGE sql IMMUTABLE AS 'SELECT true'"
+  sabotar aditivo_e_extras.sql "itens de aditivo sem regra (restabelecimento livre)" "DROP TRIGGER trg_aditivo_item_guard ON aditivo_item"
+  sabotar aditivo_e_extras.sql "limite legal nunca excede" \
+    "CREATE OR REPLACE FUNCTION fn_limites_aditivos(p_contrato uuid, p_simular uuid DEFAULT NULL)
+       RETURNS TABLE (valor_inicial numeric, acrescimos numeric, supressoes numeric, restabelecimentos numeric,
+                      perc_acrescimos numeric, perc_supressoes numeric, limite_acrescimo numeric, limite_supressao numeric, situacao text)
+       LANGUAGE sql STABLE AS 'SELECT 1::numeric, 0::numeric, 0::numeric, 0::numeric, 0::numeric, 0::numeric, 25::numeric, 25::numeric, ''OK''::text'"
+  sabotar aditivo_e_extras.sql "previsão reescrita pelo dono" "DROP TRIGGER trg_previsao_evento_imutavel ON previsao_evento"
+  sabotar aditivo_e_extras.sql "previsão sem método" "ALTER TABLE previsao_evento ALTER COLUMN metodo DROP NOT NULL"
+  sabotar aditivo_e_extras.sql "relatório emitido alterável pelo dono" "DROP TRIGGER trg_relatorio_emitido_imutavel ON relatorio_emitido"
+  sabotar aditivo_e_extras.sql "relatório fotográfico com qualquer foto" "DROP TRIGGER trg_relatorio_emitido_guard ON relatorio_emitido"
+  sabotar aditivo_e_extras.sql "foto de relatório emitido muda de vínculo" "DROP TRIGGER trg_a_foto_em_relatorio_guard ON foto"
+  sabotar estrutura.sql "regra de pagamento que lê a previsão" \
+    "CREATE FUNCTION fn_valor_previsto(p uuid) RETURNS numeric LANGUAGE sql STABLE AS 'SELECT sum(valor_liquido) FROM previsao_evento WHERE evento_id = p'"
+  sabotar estrutura.sql "visão oficial que lê a previsão" \
+    "CREATE VIEW vw_pagar WITH (security_invoker = true) AS SELECT evento_id, valor_liquido FROM previsao_evento; GRANT SELECT ON vw_pagar TO app_rw"
+  sabotar estrutura.sql "medição apontando para a previsão" "ALTER TABLE medicao ADD COLUMN previsao_id uuid REFERENCES previsao_calculo"
+  sabotar estrutura.sql "gatilho na previsão que grava em outro lugar" \
+    "CREATE TRIGGER trg_auditoria AFTER INSERT ON previsao_evento FOR EACH ROW EXECUTE FUNCTION fn_auditar()"
+  sabotar estrutura.sql "aplicação altera relatório emitido" "GRANT UPDATE ON relatorio_emitido TO app_rw"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"

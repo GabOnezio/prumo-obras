@@ -59,6 +59,22 @@ SELECT pg_temp.confere_vazio('tabela sem tenant_id fora da lista conhecida', $$
      AND NOT EXISTS (SELECT FROM pg_attribute a
                       WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)$$);
 
+-- A previsão é cálculo guardado para consulta. Nenhuma regra de aprovação, glosa ou pagamento
+-- pode ler dela, e nada oficial pode depender dela (docs/10 §9, invariante 10).
+SELECT pg_temp.confere_vazio('tabela oficial que aponta para a previsão', $$
+  SELECT origem.relname FROM pg_constraint k
+    JOIN pg_class origem  ON origem.oid = k.conrelid
+    JOIN pg_class destino ON destino.oid = k.confrelid
+   WHERE k.contype = 'f' AND destino.relname LIKE 'previsao\_%' AND origem.relname NOT LIKE 'previsao\_%'$$);
+SELECT pg_temp.confere_vazio('função ou gatilho que lê a previsão', $$
+  SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.prosrc ~* 'previsao_(calculo|evento)'$$);
+SELECT pg_temp.confere_vazio('visão que lê a previsão', $$
+  SELECT viewname FROM pg_views WHERE schemaname = 'public' AND definition ~* 'previsao_(calculo|evento)'$$);
+SELECT pg_temp.confere_vazio('gatilho nas tabelas de previsão além do que as torna imutáveis', $$
+  SELECT c.relname || '.' || t.tgname FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+   WHERE c.relname LIKE 'previsao\_%' AND NOT t.tgisinternal AND t.tgname NOT LIKE '%\_imutavel'$$);
+
 -- A IA propõe e o registro guarda. Dado de negócio não pode depender de uma linha desse registro.
 SELECT pg_temp.confere_vazio('tabela que aponta para o registro de decisões de IA', $$
   SELECT origem.relname FROM pg_constraint k JOIN pg_class origem ON origem.oid = k.conrelid
@@ -146,11 +162,13 @@ SELECT pg_temp.confere_vazio('app_rw grava no cadastro de municípios', $$
 -- Registros que só crescem: a aplicação lê e acrescenta, nunca altera nem apaga.
 SELECT pg_temp.confere_vazio('app_rw apaga registro que não se apaga', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-   WHERE n.nspname = 'public' AND c.relname IN ('ia_decisao', 'publicacao', 'denuncia', 'config_municipio', 'foto')
+   WHERE n.nspname = 'public' AND c.relname IN ('ia_decisao', 'publicacao', 'denuncia', 'config_municipio', 'foto', 'pleito',
+                                               'servico_extra')
      AND has_table_privilege('app_rw', c.oid, 'DELETE')$$);
 
 SELECT pg_temp.confere_vazio('app_rw altera ou apaga registro que só cresce', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relname IN ('auditoria', 'medicao_etapa', 'execucao_financeira_ref', 'rdo_etapa', 'rdo_instrucao',
-                                               'documento_orgao')
+                                               'documento_orgao', 'previsao_calculo', 'previsao_evento',
+                                               'relatorio_emitido')
      AND (has_table_privilege('app_rw', c.oid, 'UPDATE') OR has_table_privilege('app_rw', c.oid, 'DELETE'))$$);

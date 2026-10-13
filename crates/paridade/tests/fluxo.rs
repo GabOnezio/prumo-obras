@@ -4,6 +4,10 @@
 mod comum;
 
 use comum::conectar;
+use prumo_dominio::aditivo::SituacaoDosLimites;
+use prumo_dominio::fluxo::aditivo::{
+    self as fluxo_do_aditivo, AcaoAditivo, EstadoAditivo, RegrasDoAditivo, SituacaoDoAditivo,
+};
 use prumo_dominio::fluxo::diario::{self, AcaoDiario, EstadoDiario};
 use prumo_dominio::fluxo::medicao::{
     transitar, AcaoMedicao, EstadoMedicao, RegrasDaMedicao, SituacaoDaMedicao,
@@ -172,5 +176,63 @@ fn transicoes_do_diario_sao_as_mesmas_no_rust_e_no_sql() {
         "fluxo do diário: {} estados e {} ações com os mesmos nomes; {comparadas} combinações iguais no Rust e no SQL, {permitidas} permitidas",
         estados.len(),
         acoes.len()
+    );
+}
+
+#[test]
+#[ignore = "precisa do banco: rode scripts/db-test.sh paridade"]
+fn transicoes_do_aditivo_sao_as_mesmas_no_rust_e_no_sql() {
+    let mut banco = conectar();
+    let estados: Vec<String> = EstadoAditivo::TODOS
+        .iter()
+        .map(|e| e.nome().to_string())
+        .collect();
+    assert_eq!(
+        rotulos(&mut banco, "status_aditivo"),
+        estados,
+        "estados do aditivo"
+    );
+
+    // Aditivo pronto para homologar, pedido por alguém que não o enviou.
+    let pronto = SituacaoDoAditivo {
+        enviado_por: Some(PessoaId(1)),
+        limites: SituacaoDosLimites::Dentro,
+        tem_parecer: true,
+        termo_assinado: true,
+    };
+    let regras = RegrasDoAditivo {
+        parecer_exigido: true,
+    };
+    let (mut comparadas, mut permitidas) = (0, 0);
+    for de in EstadoAditivo::TODOS {
+        for para in EstadoAditivo::TODOS {
+            let no_rust = AcaoAditivo::TODAS.iter().any(|acao| {
+                Papel::TODOS.iter().any(|papel| {
+                    let pedido = Pedido {
+                        quem: PessoaId(99),
+                        papel: *papel,
+                        motivo: Some("motivo"),
+                    };
+                    fluxo_do_aditivo::transitar(de, *acao, &pedido, &pronto, &regras) == Ok(para)
+                })
+            });
+            let linha = banco
+                .query_one(
+                    "SELECT fn_transicao_aditivo($1::text::status_aditivo, $2::text::status_aditivo)",
+                    &[&de.nome(), &para.nome()],
+                )
+                .expect("fn_transicao_aditivo");
+            let no_sql: bool = linha.get(0);
+            assert_eq!(no_sql, no_rust, "{de:?} → {para:?}: SQL × Rust");
+            comparadas += 1;
+            if no_rust {
+                permitidas += 1;
+            }
+        }
+    }
+    assert_eq!(permitidas, 3);
+    println!(
+        "fluxo do aditivo: {} estados com os mesmos nomes; {comparadas} pares de estados iguais no Rust e no SQL, {permitidas} permitidos",
+        estados.len()
     );
 }
