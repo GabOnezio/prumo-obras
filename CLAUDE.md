@@ -52,7 +52,9 @@ Ver `docs/03-arquitetura.md`. Resumo:
 ## 4. Banco de dados
 
 - Ponto de partida: `db/reference/schema.sql` (SaaS da **construtora**). **O nosso tenant é o município** e o bloco financeiro da empresa sai do núcleo. Siga o plano de `docs/06-banco-de-dados.md`.
-- Migrações em `db/migrations/NNNN_nome.sql`, **imutáveis depois de publicadas**.
+- Migrações em `db/migrations/NNNN_nome.sql`, **imutáveis depois de registradas** em `db/migrations/SHA256SUMS` (ADR 0006): sem `BEGIN`/`COMMIT` no arquivo; correção é migração nova.
+- Tabela nova: `tenant_id`, RLS com política pelo tenant da sessão e `GRANT` para `app_rw` na própria migração (ADR 0007). `db/tests/estrutura.sql` cobra as três coisas.
+- Teste novo de banco vai em `db/tests/*.sql` e roda numa cópia limpa do banco migrado. Ao criar uma proteção, acrescente um caso na suíte de sabotagem de `scripts/db-test.sh`.
 - Testes de invariante no estilo `pg_temp.espera_erro` (veja `db/reference/seed_e_testes.sql`): cada regra do domínio tem um teste que **prova o bloqueio** em Postgres real.
 - A API define `app.tenant_id` e `app.usuario` em **toda** sessão.
 
@@ -80,7 +82,9 @@ Ver `docs/03-arquitetura.md`. Resumo:
 # já existem:
 ./scripts/ci-local.sh                              # porteiro antes de cada commit: fmt, clippy e testes dos crates leves
 ./scripts/ci-local.sh --tudo                       # uma vez por etapa: workspace inteiro, banco, cargo audit e cargo deny
-./scripts/db-test.sh                               # regras do banco em PostgreSQL 16 descartável (Docker)
+./scripts/db-test.sh                               # regras do banco em PostgreSQL 16 descartável (Docker); suítes:
+                                                   #   referencia, porte, migracoes, sabotagem (sem nome: todas)
+./scripts/db-test.sh registrar                     # anota o SHA-256 de migração nova em db/migrations/SHA256SUMS
 cargo test -p prumo-dominio -p prumo-demonstracao   # leve; roda no WSL
 ./scripts/build-windows.sh                         # compila a prévia no Windows e copia o Prumo.exe para a Área de Trabalho
                                                    # (--sem-copiar só compila; a primeira vez leva uns 10 minutos)

@@ -156,3 +156,23 @@ relatorio_emitido (contrato_id, tipo{boletim_execucao, planilha_medicao, relator
 11. Seed de demonstração **fictício** (município de Exemplo), nunca dados reais. O seed inclui um contrato por eventos e um por quantidade.
 
 A ordem de 0007 a 0009 segue a prioridade do produto: como eventos vêm primeiro, 0007 e 0008 são pré-requisito da Fase 2 do roadmap.
+
+## 6. Como as migrações são aplicadas e provadas
+
+Decisões em `adr/0006-migracoes-sql-com-registro.md` e `adr/0007-tenant-municipio-rls-app-rw.md`.
+
+- Cada migração é um arquivo SQL sem `BEGIN` nem `COMMIT`. Quem aplica abre a transação e grava, junto, a linha em `migracao_aplicada` (versão, nome, SHA-256, hora).
+- `db/migrations/SHA256SUMS` guarda o SHA-256 de cada migração. Arquivo registrado não muda.
+- `scripts/db-test.sh` sobe um PostgreSQL 16 descartável e roda quatro suítes:
+
+| Suíte | O que prova |
+|---|---|
+| `referencia` | O schema e o seed do engenheiro rodam sem alteração: 12 bloqueios e os 26 números de aceite |
+| `porte` | A `0001` tem o mesmo catálogo da referência (tirando o que saiu de propósito) e dá os mesmos 12 bloqueios e 26 números |
+| `migracoes` | Numeração e registro; aplicar duas vezes não faz nada; arquivo diferente do aplicado é recusado; e cada arquivo de `db/tests/*.sql` numa cópia limpa do banco migrado |
+| `sabotagem` | Retira uma proteção por vez e exige que o teste correspondente acuse |
+
+- Arquivos de teste: `estrutura.sql` (regras de RLS e do papel `app_rw`, conferidas no catálogo) e `isolamento.sql` (dois municípios fictícios). Os próximos entram na mesma pasta, um por assunto.
+- `db/tests/_util.sql` traz os utilitários: `espera_erro` (exige o bloqueio), `confere` e `confere_texto` (exigem o valor exato) e `confere_vazio` (exige que uma consulta não devolva nada).
+- `PRUMO_DB_SAIDA=pasta` guarda a saída completa de cada teste, com o motivo de cada bloqueio. Vale ler: `espera_erro` aceita qualquer erro, inclusive erro de digitação no próprio teste.
+

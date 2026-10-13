@@ -6,7 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 
 ### Fase 0 · Fundação (em andamento, branch `fase-0-fundacao`)
 - **Etapa 0, ferramentas:** toolchain fixada em Rust 1.99.0 (`rust-toolchain.toml`); `scripts/ci-local.sh` com os mesmos passos do CI, que é o porteiro enquanto o GitHub Actions não inicia na conta; `deny.toml` com a política provisória de licenças e origens. `cargo deny check` e `cargo audit` passam; o `.exe` compila no Windows com a toolchain fixada.
-- **Etapa 1, verdade de referência:** `scripts/db-test.sh` sobe um PostgreSQL 16 descartável, roda o schema e o seed do engenheiro sem alteração e exige os 12 bloqueios e os 26 números de aceite (`db/tests/referencia_numeros.sql`).
+- **Etapa 1, verdade de referência:** `scripts/db-test.sh` sobe um PostgreSQL 16 descartável, roda o schema e o seed do engenheiro sem alteração e exige os 12 bloqueios e os 26 números de aceite (`db/tests/referencia/numeros.sql`).
+- **Etapa 2, banco base:** `db/migrations/0001_base.sql`, porte do schema de referência sem o que é só da construtora (ficam 34 tabelas), mais o papel `app_rw`. O porte é provado em PostgreSQL 16: catálogo igual ao da referência em 687 fatos, os mesmos 12 bloqueios e os mesmos 26 números. Registro de migrações com SHA-256 no repositório (`SHA256SUMS`) e no banco (`migracao_aplicada`). Testes novos: `db/tests/estrutura.sql` (19 conferências no catálogo), `db/tests/isolamento.sql` (dois municípios fictícios, 15 bloqueios e 23 conferências) e a suíte de sabotagem (22 proteções retiradas, 22 percebidas). ADRs 0006 e 0007. Questão 35.
 
 ### Alterado
 - **Nome do produto: Prumo** (antes "SGOP", nome de trabalho). Repositório e pasta `prumo-obras`; artefatos com prefixo `prumo-`; marca na tela "Prumo · Prefeitura de ___" com o brasão do município; IA como "Prumo + RREIA" e, em venda, "Prumo IA Local" (ADR 0001).
