@@ -8,7 +8,10 @@
 
 mod comum;
 
-use comum::{conectar, decimal, id, nome_no_banco, Sorteio};
+use comum::{
+    conectar, decimal, id, nome_no_banco, sql_das_pessoas, sql_de_aprovar, sql_de_enviar, Sorteio,
+    EMPRESA_ALFA,
+};
 use postgres::Client;
 use prumo_dominio::{
     aplicar_aditivo, boletim_de_medicao, fator_art127, limites_dos_aditivos, medir_por_quantidade,
@@ -164,10 +167,8 @@ fn medir(
             id(4, c, n(item)),
         );
     }
-    sql += &format!(
-        "UPDATE medicao SET status = 'enviada' WHERE id = '{medicao}';
-         UPDATE medicao SET status = 'aprovada', aprovada_por = 'Fiscal fictício' WHERE id = '{medicao}';"
-    );
+    sql += &sql_de_enviar(&medicao);
+    sql += &sql_de_aprovar(&medicao);
     banco
         .batch_execute(&sql)
         .unwrap_or_else(|e| panic!("contrato {c}, medição {numero}: {e}"));
@@ -520,10 +521,10 @@ fn aditivo_e_boletim_dao_os_mesmos_numeros_no_rust_e_no_sql() {
             "INSERT INTO contrato (id, obra_id, orgao_id, numero, processo_licitatorio, objeto, regime_execucao,
                                    data_assinatura, data_base_orcamento, prazo_execucao_dias, vigencia_fim,
                                    valor_inicial, valor_orcamento_base, bdi_percentual, reforma,
-                                   criterio_arredondamento, casas_decimais_preco, forma_acompanhamento)
+                                   criterio_arredondamento, casas_decimais_preco, forma_acompanhamento, empresa_id)
              VALUES ('{contrato}', '{OBRA}', '{ORGAO}', 'PARIDADE-BM-{c}', 'Teste de paridade', 'Contrato sorteado',
                      'empreitada_preco_unitario', '2026-09-14', '2026-05-01', 120, '2027-04-30',
-                     {}, {}, 0, {reforma}, '{}', {casas}, 'bm');
+                     {}, {}, 0, {reforma}, '{}', {casas}, 'bm', '{EMPRESA_ALFA}');
              INSERT INTO revisao_orcamento (id, contrato_id, numero, origem) VALUES ('{revisao_0}', '{contrato}', 0, 'importacao');",
             valor_inicial.decimal(),
             orcamento_base.decimal(),
@@ -537,6 +538,7 @@ fn aditivo_e_boletim_dao_os_mesmos_numeros_no_rust_e_no_sql() {
         }
         sql += &sql_dos_itens(&rev0, c, &revisao_0);
         sql += &format!("UPDATE revisao_orcamento SET status = 'vigente', data_vigencia = DATE '2026-09-14' WHERE id = '{revisao_0}';");
+        sql += &sql_das_pessoas(&contrato);
         banco
             .batch_execute(&sql)
             .unwrap_or_else(|e| panic!("contrato {c} não gravou: {e}"));

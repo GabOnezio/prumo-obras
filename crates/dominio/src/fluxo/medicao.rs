@@ -91,6 +91,20 @@ impl AcaoMedicao {
         AcaoMedicao::RegistrarPagamento,
     ];
 
+    /// Nome da ação no banco (`acao_medicao`).
+    pub fn codigo(self) -> &'static str {
+        match self {
+            AcaoMedicao::Enviar => "enviar",
+            AcaoMedicao::Cancelar => "cancelar",
+            AcaoMedicao::IniciarAnalise => "iniciar_analise",
+            AcaoMedicao::Devolver => "devolver",
+            AcaoMedicao::AprovarComoFiscal => "aprovar_fiscal",
+            AcaoMedicao::Atestar => "atestar",
+            AcaoMedicao::RegistrarLiquidacao => "registrar_liquidacao",
+            AcaoMedicao::RegistrarPagamento => "registrar_pagamento",
+        }
+    }
+
     pub fn nome(self) -> &'static str {
         match self {
             AcaoMedicao::Enviar => "enviar a medição",

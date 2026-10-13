@@ -36,6 +36,40 @@ pub fn decimal(texto: &str) -> Decimal {
         .unwrap_or_else(|_| panic!("número inválido vindo do banco ou do teste: {texto:?}"))
 }
 
+/// Pessoas e cadastros do seed fictício que os testes usam para agir nos contratos sorteados.
+pub const EMPRESA_ALFA: &str = "e0e0e0e0-0000-0000-0000-0000000000e1";
+pub const PREPOSTO: &str = "e0e0e0e0-0000-0000-0001-000000000005";
+pub const FISCAL: &str = "e0e0e0e0-0000-0000-0001-000000000001";
+pub const PORTARIA: &str = "e0e0e0e0-0000-0000-0000-0000000000a9";
+
+/// Põe o preposto e o fiscal do seed num contrato de teste, que tem que ser da empresa Alfa.
+pub fn sql_das_pessoas(contrato: &str) -> String {
+    format!(
+        "INSERT INTO usuario_externo (usuario_id, empresa_id, contrato_id, papel, inicio)
+         VALUES ('{PREPOSTO}', '{EMPRESA_ALFA}', '{contrato}', 'preposto', '2026-09-14');
+         INSERT INTO designacao (servidor_id, contrato_id, funcao, inicio, portaria_id)
+         SELECT s.id, '{contrato}', 'fiscal_tecnico', DATE '2026-09-15', '{PORTARIA}'
+           FROM servidor s WHERE s.usuario_id = '{FISCAL}';"
+    )
+}
+
+/// A empresa envia a medição.
+pub fn sql_de_enviar(medicao: &str) -> String {
+    format!(
+        "SET app.usuario_id = '{PREPOSTO}';
+         INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('{medicao}', 'enviar');"
+    )
+}
+
+/// O fiscal analisa e aprova a medição já enviada.
+pub fn sql_de_aprovar(medicao: &str) -> String {
+    format!(
+        "SET app.usuario_id = '{FISCAL}';
+         INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('{medicao}', 'iniciar_analise');
+         INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('{medicao}', 'aprovar_fiscal');"
+    )
+}
+
 /// Id de teste, legível e sem repetir: tipo do registro, contrato e número.
 pub fn id(tipo: u16, contrato: usize, n: usize) -> String {
     format!("f0f0f0f0-{tipo:04x}-0000-{contrato:04x}-{n:012x}")

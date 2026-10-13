@@ -137,5 +137,5 @@ SELECT pg_temp.confere_vazio('app_rw grava no cadastro de municípios', $$
 -- Registros que só crescem: a aplicação lê e acrescenta, nunca altera nem apaga.
 SELECT pg_temp.confere_vazio('app_rw altera ou apaga registro que só cresce', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-   WHERE n.nspname = 'public' AND c.relname IN ('auditoria')
+   WHERE n.nspname = 'public' AND c.relname IN ('auditoria', 'medicao_etapa', 'execucao_financeira_ref')
      AND (has_table_privilege('app_rw', c.oid, 'UPDATE') OR has_table_privilege('app_rw', c.oid, 'DELETE'))$$);

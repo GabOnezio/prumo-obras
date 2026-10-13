@@ -6,7 +6,9 @@
 
 mod comum;
 
-use comum::{conectar, decimal, id, nome_no_banco, Sorteio};
+use comum::{
+    conectar, decimal, id, nome_no_banco, sql_das_pessoas, sql_de_enviar, Sorteio, EMPRESA_ALFA,
+};
 use prumo_dominio::{valor_item, CriterioArredondamento, Dinheiro, Evento, ServicoNaFrente};
 use rust_decimal::Decimal;
 use std::collections::BTreeMap;
@@ -213,10 +215,11 @@ fn eventos_de_contratos_sorteados_valem_o_mesmo_no_rust_e_no_sql() {
             "INSERT INTO contrato (id, obra_id, orgao_id, numero, processo_licitatorio, objeto, regime_execucao,
                                    data_assinatura, data_base_orcamento, prazo_execucao_dias, vigencia_fim,
                                    valor_inicial, valor_orcamento_base, bdi_percentual, criterio_arredondamento,
-                                   casas_decimais_preco, forma_acompanhamento)
+                                   casas_decimais_preco, forma_acompanhamento, empresa_id)
              VALUES ('{contrato}', 'e0e0e0e0-0000-0000-0000-0000000000b1', 'e0e0e0e0-0000-0000-0000-0000000000a1',
                      'PARIDADE-{c:02}', 'Teste de paridade', 'Contrato sorteado', 'empreitada_preco_global',
-                     '2026-09-14', '2026-05-01', 90, '2027-03-31', {valor}, {valor}, 0, '{criterio}', {casas}, 'ple');
+                     '2026-09-14', '2026-05-01', 90, '2027-03-31', {valor}, {valor}, 0, '{criterio}', {casas}, 'eventos',
+                     '{EMPRESA_ALFA}');
              INSERT INTO revisao_orcamento (id, contrato_id, numero, origem) VALUES ('{revisao}', '{contrato}', 0, 'importacao');
              INSERT INTO item_contratual (id, contrato_id) VALUES ('{item_grupo}', '{contrato}');
              INSERT INTO item_revisao (id, revisao_id, item_contratual_id, parent_id, ordem, codigo_eap, tipo, descricao)
@@ -269,9 +272,10 @@ fn eventos_de_contratos_sorteados_valem_o_mesmo_no_rust_e_no_sql() {
             "UPDATE revisao_orcamento SET status = 'vigente', data_vigencia = DATE '2026-09-14' WHERE id = '{revisao}';
              INSERT INTO medicao (id, contrato_id, numero, revisao_id, periodo_inicio, periodo_fim)
              VALUES ('{medicao}', '{contrato}', 1, '{revisao}', '2026-10-01', '2026-10-31');
-             INSERT INTO medicao_evento (medicao_id, evento_id) SELECT '{medicao}'::uuid, id FROM evento WHERE revisao_id = '{revisao}';
-             UPDATE medicao SET status = 'enviada' WHERE id = '{medicao}';"
+             INSERT INTO medicao_evento (medicao_id, evento_id) SELECT '{medicao}'::uuid, id FROM evento WHERE revisao_id = '{revisao}';"
         );
+        sql += &sql_das_pessoas(&contrato);
+        sql += &sql_de_enviar(&medicao);
         banco
             .batch_execute(&sql)
             .unwrap_or_else(|e| panic!("contrato {c} não gravou: {e}"));

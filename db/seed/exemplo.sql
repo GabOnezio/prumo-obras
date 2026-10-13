@@ -14,7 +14,6 @@
 --   psql -1 -v ON_ERROR_STOP=1 -f db/seed/exemplo.sql
 -- SQL puro, sem comando do psql, para poder ser carregado por outro programa.
 -- Os valores (total de item, de evento e de revisão) não estão escritos aqui: o banco calcula.
--- Até a migração 0007 a medição por eventos se chama 'ple' no banco, nome herdado da referência.
 -- =============================================================================
 
 INSERT INTO tenant (id, razao_social, cnpj, uf) VALUES
@@ -40,7 +39,7 @@ VALUES
    'e0e0e0e0-0000-0000-0000-0000000000a1', '045/2026', 'Concorrência Eletrônica nº 12/2026',
    'Ampliação da Escola Municipal', 'empreitada_preco_global',
    '2026-09-14', '2026-05-01', 215, '2027-07-30', '2026-09-28',
-   164039.34, 178000.00, 24.50, 'arredondar', 'ple'),
+   164039.34, 178000.00, 24.50, 'arredondar', 'eventos'),
   ('e0e0e0e0-0000-0000-0000-0000000000c2', 'e0e0e0e0-0000-0000-0000-0000000000b2',
    'e0e0e0e0-0000-0000-0000-0000000000a1', '052/2026', 'Concorrência Eletrônica nº 15/2026',
    'Pavimentação da Rua das Acácias', 'empreitada_preco_unitario',

@@ -3,10 +3,13 @@
 -- Os valores esperados foram calculados à mão; a conta de cada um está no comentário.
 -- Os bloqueios exigem o motivo (espera_erro_com): várias destas regras têm mais de uma camada
 -- de proteção, e sem o motivo o teste passaria mesmo com o gatilho certo desligado.
--- Até a migração 0007 o banco chama a medição por eventos de 'ple' e a por quantidade de 'bm'.
+-- A situação da medição só muda por etapa (medicao_etapa), em nome de quem está na sessão.
 SET ROLE app_rw;
 SET app.tenant_id = 'e0e0e0e0-0000-0000-0000-000000000001';
 SET app.usuario = 'teste.eventos';
+\set preposto      '''e0e0e0e0-0000-0000-0001-000000000005'''
+\set preposto_beta '''e0e0e0e0-0000-0000-0001-000000000007'''
+\set fiscal        '''e0e0e0e0-0000-0000-0001-000000000001'''
 
 SELECT id AS c_ev FROM contrato WHERE numero = '045/2026' \gset
 SELECT id AS c_bm FROM contrato WHERE numero = '052/2026' \gset
@@ -81,7 +84,7 @@ INSERT INTO contrato (id, obra_id, orgao_id, numero, processo_licitatorio, objet
                       data_base_orcamento, prazo_execucao_dias, vigencia_fim, valor_inicial, valor_orcamento_base,
                       bdi_percentual, criterio_arredondamento, forma_acompanhamento)
 SELECT 'e0e0e0e0-0000-0000-0000-0000000000c9', obra_id, orgao_id, 'T-01/2026', 'Teste', 'Contrato de teste',
-       'empreitada_preco_global', '2026-09-14', '2026-05-01', 60, '2027-01-31', 125.99, 130.00, 20, 'arredondar', 'ple'
+       'empreitada_preco_global', '2026-09-14', '2026-05-01', 60, '2027-01-31', 125.99, 130.00, 20, 'arredondar', 'eventos'
   FROM contrato WHERE id = :'c_ev';
 INSERT INTO revisao_orcamento (id, contrato_id, numero, origem) VALUES
   ('e0e0e0e0-0000-0000-0000-0000000000d9', 'e0e0e0e0-0000-0000-0000-0000000000c9', 0, 'importacao');
@@ -215,7 +218,7 @@ SELECT pg_temp.confere('medição 1: valor das linhas = valor do evento',
   (SELECT sum(valor) FROM medicao_item WHERE medicao_id = 'e0e0e0e0-0000-0000-0000-0000000000e1'), 34181.80);
 
 CALL pg_temp.espera_erro_com('lançar serviço por quantidade em contrato por eventos',
-  'lançamento por BM não é permitido', ARRAY[
+  'linha lançada por quantidade não é aceita', ARRAY[
   $$INSERT INTO medicao_item (medicao_id, item_contratual_id, quantidade, valor)
     VALUES ('e0e0e0e0-0000-0000-0000-0000000000e1', pg_temp.item('045/2026', '3.1'), 10, 0)$$]);
 CALL pg_temp.espera_erro_com('alterar a quantidade de linha gerada pelo evento',
@@ -231,12 +234,15 @@ CALL pg_temp.espera_erro_com('evento de outro contrato',
   $$INSERT INTO medicao_evento (medicao_id, evento_id) VALUES
       ('e0e0e0e0-0000-0000-0000-0000000000e1', pg_temp.evento_do_agrupador('T-01/2026', 1, 'Bloco A'))$$]);
 
-UPDATE medicao SET status = 'enviada' WHERE id = 'e0e0e0e0-0000-0000-0000-0000000000e1';
+SET app.usuario_id = :preposto;
+INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('e0e0e0e0-0000-0000-0000-0000000000e1', 'enviar');
 CALL pg_temp.espera_erro_com('incluir evento em medição enviada',
   'eventos não podem ser alterados', ARRAY[
   $$INSERT INTO medicao_evento (medicao_id, evento_id) VALUES
       ('e0e0e0e0-0000-0000-0000-0000000000e1', pg_temp.evento_do_agrupador('045/2026', 2, 'Térreo'))$$]);
-UPDATE medicao SET status = 'aprovada', aprovada_por = 'Fiscal fictício' WHERE id = 'e0e0e0e0-0000-0000-0000-0000000000e1';
+SET app.usuario_id = :fiscal;
+INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('e0e0e0e0-0000-0000-0000-0000000000e1', 'iniciar_analise');
+INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('e0e0e0e0-0000-0000-0000-0000000000e1', 'aprovar_fiscal');
 SELECT pg_temp.confere('medição 1 aprovada: valor bruto = valor do evento',
   (SELECT valor_bruto FROM medicao WHERE id = 'e0e0e0e0-0000-0000-0000-0000000000e1'), 34181.80);
 CALL pg_temp.espera_erro_com('tirar evento de medição aprovada',
@@ -269,7 +275,8 @@ SELECT pg_temp.confere('medição 2: pilares desmarcados, linhas de serviço',
 -- Medição cancelada solta o evento para uma medição seguinte.
 INSERT INTO medicao_evento (medicao_id, evento_id) VALUES
   ('e0e0e0e0-0000-0000-0000-0000000000e2', pg_temp.evento_do_agrupador('045/2026', 2, 'Térreo'));
-UPDATE medicao SET status = 'cancelada' WHERE id = 'e0e0e0e0-0000-0000-0000-0000000000e2';
+SET app.usuario_id = :preposto;
+INSERT INTO medicao_etapa (medicao_id, acao) VALUES ('e0e0e0e0-0000-0000-0000-0000000000e2', 'cancelar');
 INSERT INTO medicao (id, contrato_id, numero, revisao_id, periodo_inicio, periodo_fim) VALUES
   ('e0e0e0e0-0000-0000-0000-0000000000e3', :'c_ev', 3, :'rev_ev', '2026-11-01', '2026-12-31');
 INSERT INTO medicao_evento (medicao_id, evento_id) VALUES
@@ -291,9 +298,9 @@ CALL pg_temp.espera_erro_com('marcar evento em contrato por quantidade',
   $$INSERT INTO medicao_evento (medicao_id, evento_id) VALUES
       ('e0e0e0e0-0000-0000-0000-0000000000e9', pg_temp.evento_do_agrupador('045/2026', 4, 'Térreo'))$$]);
 CALL pg_temp.espera_erro_com('lançar linha de evento em contrato por quantidade',
-  'lançamento por PLE não é permitido', ARRAY[
+  'linha lançada por evento não é aceita', ARRAY[
   $$INSERT INTO medicao_item (medicao_id, item_contratual_id, quantidade, valor, origem)
-    VALUES ('e0e0e0e0-0000-0000-0000-0000000000e9', pg_temp.item('052/2026', '1.1'), 1, 0, 'ple')$$]);
+    VALUES ('e0e0e0e0-0000-0000-0000-0000000000e9', pg_temp.item('052/2026', '1.1'), 1, 0, 'eventos')$$]);
 INSERT INTO medicao_item (medicao_id, item_contratual_id, quantidade, valor) VALUES
   ('e0e0e0e0-0000-0000-0000-0000000000e9', pg_temp.item('052/2026', '1.1'), 4.50, 0),
   ('e0e0e0e0-0000-0000-0000-0000000000e9', pg_temp.item('052/2026', '2.2'), 100.00, 0);

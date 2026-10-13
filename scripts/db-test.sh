@@ -287,7 +287,7 @@ suite_migracoes() {
 
 # Regras em Rust contra o SQL, mesma entrada e mesmo centavo. Os testes do crate
 # prumo-paridade são #[ignore]: só rodam aqui, com o banco de pé.
-PARIDADES_ESPERADAS=6
+PARIDADES_ESPERADAS=7
 suite_paridade() {
   local log="$SAIDA/paridade.log" rodados
   passo "paridade: Rust × SQL, com o banco de pé"
@@ -300,7 +300,7 @@ suite_paridade() {
     falhar "paridade Rust × SQL"
   fi
   # Com --nocapture a frase do teste sai na mesma linha do nome dele.
-  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo): .*" "$log" | sed 's/^/  /' || true
+  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo|fluxo da medição): .*" "$log" | sed 's/^/  /' || true
   # Um filtro errado rodaria zero testes e "passaria": exige a contagem.
   rodados="$(grep -E '^test result: ok\. [0-9]+ passed' "$log" | awk '{ s += $4 } END { print s + 0 }')"
   [ "$rodados" -ge "$PARIDADES_ESPERADAS" ] ||
@@ -377,6 +377,22 @@ suite_sabotagem() {
   sabotar fiscalizacao.sql "todo mundo é fiscal" \
     "CREATE OR REPLACE FUNCTION fn_fiscal_do_contrato(p_usuario uuid, p_contrato uuid, p_em date)
        RETURNS boolean LANGUAGE sql STABLE AS 'SELECT true'"
+  sabotar medicao_fluxo.sql "situação da medição muda sem etapa" \
+    "CREATE OR REPLACE FUNCTION fn_medicao_guard() RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RETURN coalesce(NEW, OLD); END'"
+  sabotar medicao_fluxo.sql "etapa sem conferência" "DROP TRIGGER trg_medicao_etapa ON medicao_etapa"
+  sabotar medicao_fluxo.sql "trilha da medição reescrita" "DROP TRIGGER trg_medicao_etapa_imutavel ON medicao_etapa"
+  sabotar medicao_fluxo.sql "todo mundo é da contratada" \
+    "CREATE OR REPLACE FUNCTION fn_da_contratada(p_usuario uuid, p_contrato uuid, p_em date)
+       RETURNS boolean LANGUAGE sql STABLE AS 'SELECT true'"
+  sabotar medicao_fluxo.sql "ninguém fez etapa nenhuma (sem segregação)" \
+    "CREATE OR REPLACE FUNCTION fn_quem_fez_a_etapa(p_medicao uuid, p_acao acao_medicao)
+       RETURNS uuid LANGUAGE sql STABLE AS 'SELECT NULL::uuid'"
+  sabotar medicao_fluxo.sql "qualquer transição é aceita" \
+    "CREATE OR REPLACE FUNCTION fn_transicao_medicao(p_de status_medicao, p_acao acao_medicao)
+       RETURNS status_medicao LANGUAGE sql IMMUTABLE AS 'SELECT ''paga''::status_medicao'"
+  sabotar medicao_fluxo.sql "glosa sem regra" "DROP TRIGGER trg_medicao_glosa_guard ON medicao_glosa"
+  sabotar medicao_fluxo.sql "referência financeira alterável pelo dono" "DROP TRIGGER trg_execucao_financeira_imutavel ON execucao_financeira_ref; GRANT UPDATE ON execucao_financeira_ref TO app_rw"
+  sabotar estrutura.sql "aplicação reescreve a trilha da medição" "GRANT UPDATE ON medicao_etapa TO app_rw"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"

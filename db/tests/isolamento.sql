@@ -114,9 +114,8 @@ CALL pg_temp.espera_erro_com('A gravar contrato seu apontando para a obra do B',
                                 bdi_percentual)
            SELECT %L, id, '002/2026', 'x', 'x', 'empreitada_preco_unitario', '2026-01-05', '2025-10-01', 90, '2026-06-30',
                   10, 10, 0 FROM orgao$$, :'obra_b')]);
-CALL pg_temp.espera_erro_com('A lançar item seu na medição do B', '_tnt', ARRAY[
-  format($$INSERT INTO medicao_glosa (medicao_id, item_contratual_id, quantidade, valor, motivo)
-           SELECT %L, id, 1, 1, 'x' FROM item_contratual LIMIT 1$$, :'medicao_b')]);
+CALL pg_temp.espera_erro_com('A gravar retenção sua no contrato do B', 'contrato_retencao_contrato_id_fkey_tnt', ARRAY[
+  format($$INSERT INTO contrato_retencao (contrato_id, tipo, aliquota) VALUES (%L, 'ISS', 5)$$, :'contrato_b')]);
 -- Alterar e apagar o que não se enxerga não dá erro: simplesmente não atinge linha nenhuma.
 WITH x AS (UPDATE obra SET nome = 'Invadida' WHERE id = :'obra_b' RETURNING 1)
 SELECT pg_temp.confere('A: linhas do B alteradas', (SELECT count(*) FROM x), 0);
