@@ -133,6 +133,12 @@ fn transicoes_do_diario_sao_as_mesmas_no_rust_e_no_sql() {
         "estados do diário"
     );
     assert_eq!(rotulos(&mut banco, "acao_rdo"), acoes, "ações do diário");
+    // As situações de evento do Boletim de Execução têm os mesmos nomes no domínio e no banco.
+    assert_eq!(
+        rotulos(&mut banco, "situacao_evento"),
+        prumo_dominio::SituacaoEvento::NOMES,
+        "situações de evento"
+    );
 
     let (mut comparadas, mut permitidas) = (0, 0);
     for estado in EstadoDiario::TODOS {

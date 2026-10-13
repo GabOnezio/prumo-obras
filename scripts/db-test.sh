@@ -423,6 +423,25 @@ suite_sabotagem() {
   sabotar cronograma.sql "documento do órgão alterável pelo dono" "DROP TRIGGER trg_documento_orgao_imutavel ON documento_orgao"
   sabotar cronograma.sql "vínculo de prancha sem conferência" "DROP TRIGGER trg_prancha_vinculo_guard ON prancha_vinculo"
   sabotar estrutura.sql "aplicação altera documento do órgão" "GRANT UPDATE ON documento_orgao TO app_rw"
+  sabotar boletim.sql "boletim emitido alterável" "DROP TRIGGER trg_boletim_guard ON boletim_execucao"
+  sabotar boletim.sql "linhas do boletim emitido alteráveis" "DROP TRIGGER trg_boletim_conteudo_guard ON boletim_execucao_linha"
+  sabotar boletim.sql "evidências do boletim emitido alteráveis" "DROP TRIGGER trg_boletim_conteudo_guard ON boletim_execucao_evidencia"
+  sabotar boletim.sql "medição aprovada sem conferir o boletim" \
+    "CREATE OR REPLACE FUNCTION fn_medicao_pronta_para(p_medicao uuid, p_acao acao_medicao) RETURNS void LANGUAGE plpgsql AS 'BEGIN END'"
+  sabotar boletim.sql "todo evento consta como concluído" \
+    "CREATE OR REPLACE FUNCTION fn_situacao_do_evento(p_evento uuid)
+       RETURNS TABLE (linha_id uuid, boletim_numero integer, situacao situacao_evento, verificado_em date) LANGUAGE sql STABLE AS
+       'SELECT NULL::uuid, 0, ''concluido''::situacao_evento, DATE ''2000-01-01'''"
+  sabotar boletim.sql "glosa de evento por qualquer um" "DROP TRIGGER trg_medicao_evento_analise_guard ON medicao_evento_analise"
+  sabotar boletim.sql "glosa não refaz as linhas de serviço" "DROP TRIGGER trg_medicao_evento_analise_aplicar ON medicao_evento_analise"
+  sabotar boletim.sql "evidência mínima embutida no banco" \
+    "CREATE OR REPLACE FUNCTION fn_evidencias_para_concluido() RETURNS smallint LANGUAGE sql STABLE AS 'SELECT 0::smallint'"
+  sabotar boletim.sql "foto sem regra" "DROP TRIGGER trg_foto_guard ON foto"
+  sabotar boletim.sql "foto da galeria aceita" "ALTER TABLE foto DROP CONSTRAINT foto_origem_check"
+  sabotar boletim.sql "foto ligada à planilha sem confirmação" "ALTER TABLE foto DROP CONSTRAINT foto_check2"
+  sabotar diario.sql "serviço do dia fechado alterável" "DROP TRIGGER trg_rdo_conteudo_guard ON rdo_servico"
+  sabotar diario.sql "serviço do diário de outro contrato" "DROP TRIGGER trg_rdo_servico_guard ON rdo_servico"
+  sabotar estrutura.sql "aplicação apaga foto de evidência" "GRANT DELETE ON foto TO app_rw"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"

@@ -24,6 +24,26 @@ impl SituacaoEvento {
         }
     }
 
+    /// Nomes das situações no banco (`situacao_evento`), na ordem do tipo.
+    pub const NOMES: [&'static str; 5] = [
+        "nao_iniciado",
+        "em_andamento",
+        "concluido",
+        "concluido_com_pendencia",
+        "paralisado",
+    ];
+
+    /// Nome da situação no banco.
+    pub fn nome(self) -> &'static str {
+        match self {
+            SituacaoEvento::NaoIniciado => "nao_iniciado",
+            SituacaoEvento::EmAndamento { .. } => "em_andamento",
+            SituacaoEvento::Concluido { .. } => "concluido",
+            SituacaoEvento::ConcluidoComPendencia { .. } => "concluido_com_pendencia",
+            SituacaoEvento::Paralisado => "paralisado",
+        }
+    }
+
     /// Só `Concluido` libera o pagamento. `ConcluidoComPendencia` não libera
     /// (resposta provisória da questão 19 em `docs/QUESTOES-ABERTAS.md`).
     pub fn libera_pagamento(self) -> bool {

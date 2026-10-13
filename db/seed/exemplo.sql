@@ -264,3 +264,44 @@ INSERT INTO calendario_obra (contrato_id, data, trabalhavel, motivo)
 SELECT 'e0e0e0e0-0000-0000-0000-0000000000c1', d::date, false, 'Sem expediente'
   FROM unnest(ARRAY['2026-10-12', '2026-11-02', '2026-11-20', '2026-12-25', '2027-01-01', '2027-03-26', '2027-04-21']) AS d;
 
+-- -----------------------------------------------------------------------------
+-- Fiscalização do contrato por eventos: duas vistorias e dois Boletins de Execução emitidos
+-- pelo fiscal técnico, com a mesma situação da prévia (fundações e pilares concluídos,
+-- alvenaria em 70%).
+-- -----------------------------------------------------------------------------
+SELECT set_config('app.usuario_id', 'e0e0e0e0-0000-0000-0001-000000000001', false);
+
+INSERT INTO vistoria (id, contrato_id, data, observacao) VALUES
+  ('e0e0e0e0-0000-0000-0000-0000000000b7', 'e0e0e0e0-0000-0000-0000-0000000000c1', '2026-10-28', 'Fundações concluídas'),
+  ('e0e0e0e0-0000-0000-0000-0000000000b8', 'e0e0e0e0-0000-0000-0000-0000000000c1', '2026-12-15',
+   'Pilares concluídos em 11/12/2026; alvenaria do térreo em 70%');
+UPDATE vistoria SET concluida_em = now();
+
+-- Boletim nº 1, de outubro: só as fundações, concluídas em 28/10/2026.
+INSERT INTO boletim_execucao (id, contrato_id, numero, periodo_inicio, periodo_fim) VALUES
+  ('e0e0e0e0-0000-0000-000b-000000000001', 'e0e0e0e0-0000-0000-0000-0000000000c1', 1, '2026-10-01', '2026-10-31');
+INSERT INTO boletim_execucao_linha (id, boletim_id, evento_id, situacao, verificado_em)
+SELECT md5('boletim:1:' || a.numero)::uuid, 'e0e0e0e0-0000-0000-000b-000000000001', e.id,
+       (CASE a.numero WHEN 1 THEN 'concluido' ELSE 'nao_iniciado' END)::situacao_evento,
+       CASE a.numero WHEN 1 THEN DATE '2026-10-28' END
+  FROM evento e JOIN agrupador_evento a ON a.id = e.agrupador_id
+ WHERE e.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d1';
+INSERT INTO boletim_execucao_evidencia (linha_id, tipo, ref_id) VALUES
+  (md5('boletim:1:1')::uuid, 'vistoria', 'e0e0e0e0-0000-0000-0000-0000000000b7');
+UPDATE boletim_execucao SET status = 'emitido' WHERE id = 'e0e0e0e0-0000-0000-000b-000000000001';
+
+-- Boletim nº 2, da primeira quinzena de dezembro: pilares concluídos em 11/12, alvenaria em 70%.
+INSERT INTO boletim_execucao (id, contrato_id, numero, periodo_inicio, periodo_fim) VALUES
+  ('e0e0e0e0-0000-0000-000b-000000000002', 'e0e0e0e0-0000-0000-0000-0000000000c1', 2, '2026-12-01', '2026-12-15');
+INSERT INTO boletim_execucao_linha (id, boletim_id, evento_id, situacao, avanco_percentual, verificado_em)
+SELECT md5('boletim:2:' || a.numero)::uuid, 'e0e0e0e0-0000-0000-000b-000000000002', e.id,
+       (CASE a.numero WHEN 1 THEN 'concluido' WHEN 2 THEN 'concluido' WHEN 3 THEN 'em_andamento' ELSE 'nao_iniciado' END)::situacao_evento,
+       CASE a.numero WHEN 3 THEN 70 END,
+       CASE a.numero WHEN 1 THEN DATE '2026-10-28' WHEN 2 THEN DATE '2026-12-11' END
+  FROM evento e JOIN agrupador_evento a ON a.id = e.agrupador_id
+ WHERE e.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d1';
+INSERT INTO boletim_execucao_evidencia (linha_id, tipo, ref_id) VALUES
+  (md5('boletim:2:1')::uuid, 'vistoria', 'e0e0e0e0-0000-0000-0000-0000000000b7'),
+  (md5('boletim:2:2')::uuid, 'vistoria', 'e0e0e0e0-0000-0000-0000-0000000000b8');
+UPDATE boletim_execucao SET status = 'emitido' WHERE id = 'e0e0e0e0-0000-0000-000b-000000000002';
+

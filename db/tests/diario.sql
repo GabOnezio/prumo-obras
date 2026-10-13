@@ -29,6 +29,17 @@ CALL pg_temp.espera_erro_com('diário que já nasce fechado', 'nasce em rascunho
 INSERT INTO rdo (id, obra_id, contrato_id, data, clima_manha, responsavel) VALUES (:d1, :obra, :c_ev, '2026-12-01', 'bom', 'Apontador');
 INSERT INTO rdo_efetivo (rdo_id, funcao, quantidade) VALUES (:d1, 'Pedreiro', 4), (:d1, 'Servente', 6);
 INSERT INTO rdo_ocorrencia (rdo_id, tipo, descricao) VALUES (:d1, 'servico_executado', 'Alvenaria do térreo, eixo A');
+-- Serviço do dia, ligado à planilha e à frente, e foto tirada pela câmera do app.
+SET app.usuario_id = :apontador;
+INSERT INTO rdo_servico (rdo_id, item_contratual_id, frente_id, descricao, quantidade, unidade)
+SELECT :d1, ir.item_contratual_id, 'e0e0e0e0-0000-0000-0000-0000000000f1', 'Alvenaria de vedação', 12.50, 'm²'
+  FROM item_revisao ir WHERE ir.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d1' AND ir.codigo_eap = '3.1';
+INSERT INTO foto (contrato_id, origem, sha256, chave_arquivo, tirada_em, rdo_id)
+VALUES (:c_ev, 'camera_app', repeat('a', 64), 'ficticio/foto-1.jpg', '2026-12-01 09:30-03', :d1);
+CALL pg_temp.espera_erro_com('serviço do diário apontando para item de outro contrato', 'de outro contrato', ARRAY[
+  format($$INSERT INTO rdo_servico (rdo_id, item_contratual_id, descricao)
+           SELECT %L, ir.item_contratual_id, 'x' FROM item_revisao ir
+            WHERE ir.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d2' AND ir.codigo_eap = '3.1'$$, :d1)]);
 CALL pg_temp.espera_erro('dois diários no mesmo dia e contrato', ARRAY[
   format($$INSERT INTO rdo (obra_id, contrato_id, data, responsavel) VALUES (%L, %L, '2026-12-01', 'Outro')$$, :obra, :c_ev)]);
 
@@ -57,7 +68,10 @@ CALL pg_temp.espera_erro_com('acrescentar serviço ao dia fechado', 'dia fechado
 CALL pg_temp.espera_erro_com('apagar ocorrência do dia fechado', 'dia fechado não é sobrescrito', ARRAY[
   format($$DELETE FROM rdo_ocorrencia WHERE rdo_id = %L$$, :d1)]);
 CALL pg_temp.espera_erro_com('acrescentar foto ao dia fechado', 'dia fechado não é sobrescrito', ARRAY[
-  format($$INSERT INTO rdo_foto (rdo_id, s3_key, tirada_em) VALUES (%L, 'x', now())$$, :d1)]);
+  format($$INSERT INTO foto (contrato_id, origem, sha256, chave_arquivo, tirada_em, rdo_id)
+           VALUES (%L, 'camera_app', repeat('c', 64), 'ficticio/foto.jpg', '2026-12-01 10:00-03', %L)$$, :c_ev, :d1)]);
+CALL pg_temp.espera_erro_com('acrescentar serviço executado ao dia fechado', 'dia fechado não é sobrescrito', ARRAY[
+  format($$INSERT INTO rdo_servico (rdo_id, descricao) VALUES (%L, 'Cobertura')$$, :d1)]);
 CALL pg_temp.espera_erro_com('apagar o diário fechado', 'não se apaga', ARRAY[format($$DELETE FROM rdo WHERE id = %L$$, :d1)]);
 CALL pg_temp.espera_erro_com('fechar de novo', 'não aceita a ação', ARRAY[
   format($$CALL pg_temp.etapa(%L, %L, 'fechar')$$, :d1, :apontador)]);

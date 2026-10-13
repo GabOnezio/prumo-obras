@@ -104,12 +104,12 @@ INSERT INTO vistoria (id, contrato_id, data, observacao) VALUES
 UPDATE vistoria SET observacao = 'Alvenaria do térreo em 70%, sem pendência' WHERE id = 'e0e0e0e0-0000-0000-0004-000000000001';
 SET app.usuario_id = 'e0e0e0e0-0000-0000-0001-000000000002';
 CALL pg_temp.espera_erro_com('outro fiscal alterar a vistoria', 'Só quem fez a vistoria', ARRAY[
-  $$UPDATE vistoria SET observacao = 'x'$$]);
+  $$UPDATE vistoria SET observacao = 'x' WHERE id = 'e0e0e0e0-0000-0000-0004-000000000001'$$]);
 SET app.usuario_id = :fiscal;
 UPDATE vistoria SET concluida_em = now() WHERE id = 'e0e0e0e0-0000-0000-0004-000000000001';
 CALL pg_temp.espera_erro_com('alterar vistoria concluída', 'Vistoria concluída não se altera', ARRAY[
-  $$UPDATE vistoria SET observacao = 'x'$$]);
-CALL pg_temp.espera_erro_com('apagar vistoria concluída', 'Vistoria concluída não se altera', ARRAY[$$DELETE FROM vistoria$$]);
+  $$UPDATE vistoria SET observacao = 'x' WHERE id = 'e0e0e0e0-0000-0000-0004-000000000001'$$]);
+CALL pg_temp.espera_erro_com('apagar vistoria concluída', 'Vistoria concluída não se altera', ARRAY[$$DELETE FROM vistoria WHERE id = 'e0e0e0e0-0000-0000-0004-000000000001'$$]);
 
 \echo
 \echo '== Recebimento: provisório do fiscal, definitivo da comissão de recebimento =='
