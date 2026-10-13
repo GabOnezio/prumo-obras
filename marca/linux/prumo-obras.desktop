@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Prumo
+GenericName=Gestão de Obras Públicas
+Comment=Gestão de obras públicas para prefeituras
+Exec=prumo
+Icon=prumo-obras
+Categories=Office;
+Terminal=false
