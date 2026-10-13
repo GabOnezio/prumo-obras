@@ -1,9 +1,10 @@
 //! Regras do Prumo. Este crate é puro: não lê relógio, arquivo, rede nem banco.
 //! Tudo o que depende de data recebe a data como argumento.
 //!
-//! Estado: primeiros módulos, usados pela prévia de desktop. As regras de
-//! aditivo (art. 125 e 127), as máquinas de estado e a paridade com o SQL de
-//! referência ainda não estão aqui (ver `docs/08-roadmap.md`, Fase 0).
+//! Estado: dinheiro, valor de evento, conferência da medição e previsão. As regras de
+//! aditivo (art. 125 e 127) e as máquinas de estado ainda não estão aqui (ver
+//! `docs/08-roadmap.md`, Fase 0). A paridade com o SQL do banco é conferida em
+//! `crates/paridade`, com o banco de pé.
 
 pub mod dinheiro;
 pub mod evento;

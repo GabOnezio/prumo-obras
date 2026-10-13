@@ -34,8 +34,9 @@ impl Evento {
     }
 
     /// `Σ arredonda(quantidade na frente × preço unitário)`, serviço a serviço.
-    /// Arredonda cada serviço antes de somar, como `fn_recalcular_eventos` no
-    /// schema de referência. A paridade com o SQL ainda não tem teste.
+    /// Arredonda cada serviço antes de somar, como `fn_recalcular_eventos` no banco;
+    /// `crates/paridade` confere os dois. Por arredondar em cada frente, a soma dos
+    /// eventos pode diferir do valor da planilha por centavos (ADR 0008, questão 36).
     pub fn valor(&self, criterio: CriterioArredondamento) -> Result<Dinheiro, ErroDominio> {
         self.servicos
             .iter()
