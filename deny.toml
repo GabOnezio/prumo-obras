@@ -1,0 +1,46 @@
+# Política de dependências do Prumo, conferida por `cargo deny check`.
+#
+# PROVISÓRIA: a lista de licenças aceitas depende da licença que o repositório
+# vier a ter (questão 7 de docs/QUESTOES-ABERTAS.md). Hoje ela é a lista das
+# licenças que já aparecem na árvore de dependências, todas permissivas, mais a
+# MPL-2.0, que entra pelo Tauri.
+
+[advisories]
+# Avisos que não afetam o que o Prumo entrega. Cada um com o motivo.
+ignore = [
+    # `cargo audit` mostra este e o RUSTSEC-2024-0429 (glib) como avisos permitidos; os dois
+    # vêm das bibliotecas GTK que o Tauri usa só no Linux e somem quando ele trocar de versão.
+    { id = "RUSTSEC-2024-0370", reason = "proc-macro-error sem manutenção: macro usada só em tempo de compilação pelas bibliotecas GTK do Tauri no Linux; não entra no executável do Windows e não há substituto enquanto o Tauri usar gtk-rs 0.18" },
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-3-Clause",
+    "Zlib",
+    "Unicode-3.0",
+    "Unlicense",
+    "CC0-1.0",
+    "0BSD",
+    # Copyleft por arquivo: só obriga a publicar mudanças feitas nos arquivos da própria
+    # dependência, que o Prumo não altera. Vem com o Tauri (leitura de HTML e CSS).
+    # Decisão do autor pendente na questão 34.
+    "MPL-2.0",
+]
+confidence-threshold = 0.9
+
+[licenses.private]
+# Os crates do Prumo não são publicados e ainda não têm licença (questão 7).
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
