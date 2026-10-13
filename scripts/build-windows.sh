@@ -27,7 +27,7 @@ command -v cmd.exe >/dev/null || { echo "cmd.exe não encontrado: este script ro
 
 echo "1/3 Copiando as fontes para $COPIA_WIN"
 mkdir -p "$COPIA"
-for item in Cargo.toml Cargo.lock crates apps; do
+for item in Cargo.toml Cargo.lock rust-toolchain.toml crates apps; do
   rm -rf "${COPIA:?}/$item"
   cp -r "$RAIZ/$item" "$COPIA/$item"
 done
