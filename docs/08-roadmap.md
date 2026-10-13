@@ -6,7 +6,7 @@ Princípio: **primeiro o que não pode errar (regras, banco, auditoria), depois 
 
 > Já existe, feito para a prévia de desktop (ADR 0003): o workspace, e em `crates/dominio` o dinheiro com arredondamento por contrato, o valor de evento, a conferência da medição contra o Boletim de Execução e a previsão de término e de pagamento, com 33 testes. Falta todo o resto desta fase: migrações, paridade com o SQL, limites de aditivo, máquinas de estado, RLS, CI.
 >
-> **Andamento em 13/10/2026** (branch `fase-0-fundacao`, plano em `plano-fase-0.md`): toolchain fixada e verificação local; `scripts/db-test.sh` em PostgreSQL 16 real; migração `0001` com o porte provado contra a referência; registro de migrações; papel `app_rw` e teste de isolamento entre dois municípios. As caixas abaixo só são marcadas quando o item inteiro estiver pronto.
+> **Andamento em 13/10/2026** (branch `fase-0-fundacao`, plano em `plano-fase-0.md`): toolchain fixada e verificação local; `scripts/db-test.sh` em PostgreSQL 16 real; migração `0001` com o porte provado contra a referência; registro de migrações; papel `app_rw` e teste de isolamento entre dois municípios; seed fictício e testes dos gatilhos de eventos; paridade Rust × SQL; no domínio, aditivo, boletim de medição por quantidade e máquinas de estado. Faltam as migrações `0002` a `0009`. As caixas abaixo só são marcadas quando o item inteiro estiver pronto.
 
 - [ ] Workspace Rust, `rust-toolchain.toml`, `Cargo.lock`, CI verde (fmt, clippy `-D warnings`, test, audit, deny).
 - [ ] `db/migrations/0001..0009` a partir do schema de referência (ver `06-banco-de-dados.md`) + suíte de invariantes `espera_erro` rodando em Postgres real.

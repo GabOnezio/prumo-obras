@@ -164,14 +164,17 @@ pub fn boletim_de_medicao(
             valor_atual: atual_v,
             valor_acumulado: acumulado,
             valor_saldo: contratado - acumulado,
-            percentual_acumulado: percentual(acumulado, contratado)?,
+            percentual_acumulado: percentual_executado(acumulado, contratado)?,
         });
     }
     Ok(linhas)
 }
 
 /// `100 × parte ÷ todo`, com duas casas; `None` quando o todo é zero.
-pub fn percentual(parte: Dinheiro, todo: Dinheiro) -> Result<Option<Decimal>, ErroDominio> {
+pub fn percentual_executado(
+    parte: Dinheiro,
+    todo: Dinheiro,
+) -> Result<Option<Decimal>, ErroDominio> {
     let todo = todo.decimal().mantissa();
     if todo == 0 {
         return Ok(None);
@@ -390,7 +393,8 @@ mod tests {
         assert_eq!(soma(|l| l.valor_saldo), Dinheiro::de_centavos(2_065_320));
         // 41.447,68 ÷ 62.100,88 = 66,7425...%
         assert_eq!(
-            percentual(soma(|l| l.valor_acumulado), soma(|l| l.valor_contratado)).unwrap(),
+            percentual_executado(soma(|l| l.valor_acumulado), soma(|l| l.valor_contratado))
+                .unwrap(),
             Some(d("66.74"))
         );
     }
@@ -456,14 +460,17 @@ mod tests {
 
     #[test]
     fn percentual_de_contratado_zero_nao_existe() {
-        assert_eq!(percentual(Dinheiro::ZERO, Dinheiro::ZERO).unwrap(), None);
+        assert_eq!(
+            percentual_executado(Dinheiro::ZERO, Dinheiro::ZERO).unwrap(),
+            None
+        );
         // 1 ÷ 3 = 33,333...% · 2 ÷ 3 = 66,666...%
         let (um, dois, tres) = (
             Dinheiro::de_centavos(100),
             Dinheiro::de_centavos(200),
             Dinheiro::de_centavos(300),
         );
-        assert_eq!(percentual(um, tres).unwrap(), Some(d("33.33")));
-        assert_eq!(percentual(dois, tres).unwrap(), Some(d("66.67")));
+        assert_eq!(percentual_executado(um, tres).unwrap(), Some(d("33.33")));
+        assert_eq!(percentual_executado(dois, tres).unwrap(), Some(d("66.67")));
     }
 }

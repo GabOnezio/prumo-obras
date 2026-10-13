@@ -287,7 +287,7 @@ suite_migracoes() {
 
 # Regras em Rust contra o SQL, mesma entrada e mesmo centavo. Os testes do crate
 # prumo-paridade são #[ignore]: só rodam aqui, com o banco de pé.
-PARIDADES_ESPERADAS=3
+PARIDADES_ESPERADAS=6
 suite_paridade() {
   local log="$SAIDA/paridade.log" rodados
   passo "paridade: Rust × SQL, com o banco de pé"
@@ -300,7 +300,7 @@ suite_paridade() {
     falhar "paridade Rust × SQL"
   fi
   # Com --nocapture a frase do teste sai na mesma linha do nome dele.
-  grep -oE "(valor de item|seed × prévia|contratos sorteados): .*" "$log" | sed 's/^/  /' || true
+  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo): .*" "$log" | sed 's/^/  /' || true
   # Um filtro errado rodaria zero testes e "passaria": exige a contagem.
   rodados="$(grep -E '^test result: ok\. [0-9]+ passed' "$log" | awk '{ s += $4 } END { print s + 0 }')"
   [ "$rodados" -ge "$PARIDADES_ESPERADAS" ] ||

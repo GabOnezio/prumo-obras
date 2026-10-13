@@ -6,7 +6,7 @@
 
 mod comum;
 
-use comum::{conectar, decimal, nome_no_banco, Sorteio};
+use comum::{conectar, decimal, id, nome_no_banco, Sorteio};
 use prumo_dominio::{valor_item, CriterioArredondamento, Dinheiro, Evento, ServicoNaFrente};
 use rust_decimal::Decimal;
 use std::collections::BTreeMap;
@@ -154,10 +154,6 @@ fn sortear_servico(
         preco: sorteio.decimal(2_000, casas) + Decimal::new(1, 2),
         partes,
     }
-}
-
-fn id(tipo: u16, contrato: usize, n: usize) -> String {
-    format!("f0f0f0f0-{tipo:04x}-0000-{contrato:04x}-{n:012x}")
 }
 
 #[test]

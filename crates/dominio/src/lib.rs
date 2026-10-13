@@ -22,7 +22,8 @@ pub use aditivo::{
     SituacaoDosLimites,
 };
 pub use boletim_medicao::{
-    boletim_de_medicao, medir_por_quantidade, LinhaDoBoletim, Medido, QuantidadesDoBoletim,
+    boletim_de_medicao, medir_por_quantidade, percentual_executado, LinhaDoBoletim, Medido,
+    QuantidadesDoBoletim,
 };
 pub use dinheiro::{formatar_decimal, percentual, valor_item, CriterioArredondamento, Dinheiro};
 pub use evento::{Evento, ServicoNaFrente};

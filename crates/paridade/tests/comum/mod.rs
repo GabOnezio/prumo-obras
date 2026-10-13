@@ -36,6 +36,11 @@ pub fn decimal(texto: &str) -> Decimal {
         .unwrap_or_else(|_| panic!("número inválido vindo do banco ou do teste: {texto:?}"))
 }
 
+/// Id de teste, legível e sem repetir: tipo do registro, contrato e número.
+pub fn id(tipo: u16, contrato: usize, n: usize) -> String {
+    format!("f0f0f0f0-{tipo:04x}-0000-{contrato:04x}-{n:012x}")
+}
+
 /// Gerador de números de teste com semente fixa (SplitMix64): a mesma sequência em toda
 /// execução e em toda máquina. Não serve para nada além de teste.
 pub struct Sorteio(u64);

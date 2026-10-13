@@ -30,12 +30,15 @@ O tipo decimal do Rust guarda 28 dígitos. Quando o produto exato de quantidade 
 | `valor_item` × `fn_valor_item` | 25 casos escolhidos à mão e 10.000 pares sorteados com semente fixa, nos dois critérios: 20.050 comparações. 2.149 pares caem em meio centavo exato; um em cada dez sorteados tem quantidade negativa |
 | `Evento::valor` × `fn_recalcular_eventos` | 12 contratos sorteados, 10 serviços repartidos em até 4 frentes, 2 e 4 casas no preço, dois critérios: 121 eventos. Confere também o valor da planilha e o valor bruto de uma medição com todos os eventos |
 | Seed fictício × prévia de desktop | Os 6 eventos e os 16 serviços do contrato 045/2026, campo a campo, e o total de R$ 164.039,34 no banco, no Rust e na prévia |
+| Aditivo e boletim de medição, num contrato do começo ao fim | 12 contratos sorteados: Rev. 0, medição 1, aditivo 1 (acréscimo, supressão, item novo), limites simulados, homologação com a Rev. 1 calculada em Rust e aceita pelo banco, medição 2, aditivo 2 simulado com restabelecimento. Iguais: 324 linhas de `fn_boletim_medicao`, 60 itens de aditivo, `fn_limites_aditivos` nas três situações, o total de cada revisão |
+| `fator_art127` × a coluna do banco | 10.013 pares, com casos de meio exato na nona casa |
+| Percentual executado e preço de item novo | 10.002 percentuais e 10.000 preços; 2.000 e 3.000 deles em meio exato |
 
-Para saber se o teste pega erro, o arredondamento em Rust foi estragado de propósito (meio centavo deixou de subir): o teste falhou no primeiro caso da grade, `42,50 × 68,93`.
-
-Faltam, para a etapa 4: `fn_limites_aditivos`, `fn_boletim_medicao` e a coluna `fator_art127`.
+Para saber se os testes pegam erro, as contas em Rust foram estragadas de propósito duas vezes. Com o meio centavo deixando de subir, a paridade falhou no primeiro caso da grade, `42,50 × 68,93`. Com o meio exato da divisão arredondando para o lado errado, os testes de aditivo e boletim **não** falharam: os dados sorteados não caem em meio exato. Foram acrescentados casos construídos para cair, e aí a paridade falhou em dois testes.
 
 ## O que a paridade mostrou
+
+**O valor da revisão seguinte pode não ser "valor anterior + valor do aditivo".** Pelo mesmo motivo: o aditivo arredonda o valor da quantidade acrescida, e a revisão seguinte arredonda a quantidade total. Em 3 dos 12 contratos sorteados a Rev. 1 ficou diferente de "valor inicial + acréscimos − supressões" por centavos. Os limites do art. 125 usam a soma dos valores dos aditivos; o valor atual do contrato usa a revisão. Entra na questão 36.
 
 **A soma dos eventos pode não bater com o valor da planilha.** O evento arredonda cada serviço em cada frente; a planilha arredonda o serviço inteiro. Um serviço de 3,00 m² a R$ 0,33 vale R$ 0,99 na planilha; repartido em duas frentes de 1,50 m², vale R$ 0,50 em cada evento, R$ 1,00 no total. Em 8 dos 12 contratos sorteados a soma dos eventos ficou diferente da planilha por centavos. É assim no schema de referência, e o Rust reproduz. O que fazer com a diferença é a questão 36.
 
