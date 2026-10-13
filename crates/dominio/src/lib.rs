@@ -1,16 +1,17 @@
 //! Regras do Prumo. Este crate é puro: não lê relógio, arquivo, rede nem banco.
 //! Tudo o que depende de data recebe a data como argumento.
 //!
-//! Estado: dinheiro, valor de evento, conferência da medição e previsão. As regras de
-//! aditivo (art. 125 e 127) e as máquinas de estado ainda não estão aqui (ver
-//! `docs/08-roadmap.md`, Fase 0). A paridade com o SQL do banco é conferida em
-//! `crates/paridade`, com o banco de pé.
+//! O que há aqui: dinheiro, valor de evento, conferência da medição por eventos, previsão,
+//! planilha orçamentária, aditivo (art. 125 e 127), boletim de medição por quantidade e as
+//! máquinas de estado dos documentos (`fluxo`). A paridade com o SQL do banco é conferida
+//! em `crates/paridade`, com o banco de pé.
 
 pub mod aditivo;
 pub mod boletim_medicao;
 mod conta;
 pub mod dinheiro;
 pub mod evento;
+pub mod fluxo;
 pub mod medicao;
 pub mod planilha;
 pub mod previsao;
