@@ -163,16 +163,18 @@ Decisões em `adr/0006-migracoes-sql-com-registro.md` e `adr/0007-tenant-municip
 
 - Cada migração é um arquivo SQL sem `BEGIN` nem `COMMIT`. Quem aplica abre a transação e grava, junto, a linha em `migracao_aplicada` (versão, nome, SHA-256, hora).
 - `db/migrations/SHA256SUMS` guarda o SHA-256 de cada migração. Arquivo registrado não muda.
-- `scripts/db-test.sh` sobe um PostgreSQL 16 descartável e roda quatro suítes:
+- `scripts/db-test.sh` sobe um PostgreSQL 16 descartável e roda cinco suítes:
 
 | Suíte | O que prova |
 |---|---|
 | `referencia` | O schema e o seed do engenheiro rodam sem alteração: 12 bloqueios e os 26 números de aceite |
 | `porte` | A `0001` tem o mesmo catálogo da referência (tirando o que saiu de propósito) e dá os mesmos 12 bloqueios e 26 números |
-| `migracoes` | Numeração e registro; aplicar duas vezes não faz nada; arquivo diferente do aplicado é recusado; e cada arquivo de `db/tests/*.sql` numa cópia limpa do banco migrado |
+| `migracoes` | Numeração e registro; aplicar duas vezes não faz nada; arquivo diferente do aplicado é recusado; o seed fictício carrega; e cada arquivo de `db/tests/*.sql` roda numa cópia limpa do banco migrado e semeado |
+| `paridade` | As contas em Rust dão o mesmo centavo que o SQL (`crates/paridade`, ADR 0008) |
 | `sabotagem` | Retira uma proteção por vez e exige que o teste correspondente acuse |
 
-- Arquivos de teste: `estrutura.sql` (regras de RLS e do papel `app_rw`, conferidas no catálogo) e `isolamento.sql` (dois municípios fictícios). Os próximos entram na mesma pasta, um por assunto.
-- `db/tests/_util.sql` traz os utilitários: `espera_erro` (exige o bloqueio), `confere` e `confere_texto` (exigem o valor exato) e `confere_vazio` (exige que uma consulta não devolva nada).
+- Arquivos de teste: `estrutura.sql` (regras de RLS e do papel `app_rw`, conferidas no catálogo), `isolamento.sql` (dois municípios fictícios) e `eventos.sql` (valores do seed e bloqueio de cada gatilho de eventos). Os próximos entram na mesma pasta, um por assunto.
+- `db/seed/exemplo.sql` é o seed fictício: município de Exemplo, um contrato por eventos (a mesma planilha da prévia de desktop) e um por quantidade. É SQL puro e não guarda valor calculado: o banco calcula.
+- `db/tests/_util.sql` traz os utilitários: `espera_erro` (exige o bloqueio), `espera_erro_com` (exige o bloqueio e o motivo), `confere` e `confere_texto` (exigem o valor exato) e `confere_vazio` (exige que uma consulta não devolva nada).
 - `PRUMO_DB_SAIDA=pasta` guarda a saída completa de cada teste, com o motivo de cada bloqueio. Vale ler: `espera_erro` aceita qualquer erro, inclusive erro de digitação no próprio teste.
 

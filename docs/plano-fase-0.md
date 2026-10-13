@@ -177,3 +177,19 @@ Viram ADR se você aprovar.
 
 - A primeira versão citava a LP9 para "nenhum dado sai da prefeitura". A versão reenviada já traz LP4 para isso e LP9 para "sem identificar pessoas", como no `RREIA.md`.
 - "Paraná e Santa Catarina primeiro" responde em parte a questão 2 (tribunal de contas). Registro isso na abertura da fase; o efeito prático é só na Fase 4.
+
+## 10. Achados durante a execução
+
+O que apareceu ao rodar o schema de referência de verdade. Tudo conferido em PostgreSQL 16, em 13/10/2026. Nada disto foi corrigido na `0001`, que é porte fiel; a coluna da direita diz onde fecha.
+
+| # | Achado | Efeito | Onde fecha |
+|---|---|---|---|
+| 1 | **Chave estrangeira não passa pela RLS.** O município A gravou um contrato seu apontando para uma obra do município B | A não lê nada de B, mas a linha existe e impede B de apagar a própria obra | `0002`: chave composta com `tenant_id` (questão 35) |
+| 2 | **Evento criado à mão sobrevive.** Com a planilha em rascunho dá para gravar um evento com valor digitado. Se o par agrupador × frente tiver serviço, o banco recalcula ao publicar. Se não tiver, o evento fica com o valor digitado | No teste: planilha de R$ 100,00 e eventos somando R$ 5.100,00. Marcado numa medição, o evento fantasma entra com R$ 0,00, então não gera pagamento, mas aparece na lista com valor inventado | `0008`: ao publicar, só existem os eventos calculados; teste de bloqueio |
+| 3 | **Frente e agrupador podem ser renomeados** com a planilha vigente e evento já medido | Muda o sentido de documento emitido | `0007` (questão 37) |
+| 4 | **A forma de medir do contrato pode ser trocada** com medição em andamento | Era a invariante 7 de `docs/10` §9, já prevista | `0007` |
+| 5 | **Valor inicial, orçamento-base, critério de arredondamento, casas do preço e marca de reforma do contrato podem ser alterados** com a planilha vigente | Muda a base dos limites do art. 125, o fator do art. 127 e o centavo das próximas medições | `0007` (questão 38) |
+| 6 | **A soma dos eventos pode diferir do valor da planilha** por centavos, quando um serviço é repartido em frentes | Em 8 de 12 contratos sorteados. Não é defeito do porte: é como a referência calcula | Decisão sua (questão 36) |
+| 7 | **Vários bloqueios têm mais de uma camada.** Tirar o gatilho da medição por eventos não mudava o resultado de nenhum teste, porque o gatilho das linhas de serviço barra as mesmas operações por outro motivo | O teste passava sem provar o gatilho que dizia provar | Fechado na etapa 3: os testes de eventos exigem o motivo, e a sabotagem cobre os cinco gatilhos |
+| 8 | **O tipo decimal do Rust arredonda calado** quando o produto não cabe em 28 dígitos | Só com valores fora de qualquer contrato, mas daria centavo diferente do banco sem aviso | Fechado na etapa 3: conta em inteiros, resultado exato ou erro (ADR 0008) |
+
