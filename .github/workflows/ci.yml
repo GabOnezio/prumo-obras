@@ -28,7 +28,7 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/obras_test
     steps:
-      - uses: actions/checkout@v4  # TODO: fixar por SHA completo antes da primeira release
+      - uses: actions/checkout@v7  # TODO: fixar por SHA completo antes da primeira release
       - uses: dtolnay/rust-toolchain@stable  # TODO: usar a versão de rust-toolchain.toml
         with:
           components: rustfmt, clippy
@@ -55,7 +55,7 @@ jobs:
     # porque hashFiles() não é aceita na condição do job.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
         if: ${{ hashFiles('ui/package.json') != '' }}
       - uses: actions/setup-node@v4
@@ -74,7 +74,7 @@ jobs:
   segredos-e-dados:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
