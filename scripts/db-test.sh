@@ -365,6 +365,18 @@ suite_sabotagem() {
        RETURNS boolean LANGUAGE sql STABLE AS 'SELECT EXISTS (SELECT 1 FROM designacao d JOIN servidor s ON s.id = d.servidor_id
          WHERE s.usuario_id = p_usuario AND d.contrato_id = p_contrato AND d.funcao = ANY (p_funcoes)
            AND d.inicio <= p_em AND (d.fim IS NULL OR d.fim >= p_em))'"
+  sabotar fiscalizacao.sql "ordem de serviço sem a regra de sequência" "DROP TRIGGER trg_b_ordem_servico_guard ON ordem_servico"
+  sabotar fiscalizacao.sql "ordem de serviço alterável" "DROP TRIGGER trg_ordem_servico_imutavel ON ordem_servico"
+  sabotar fiscalizacao.sql "ocorrência aberta por qualquer um" "DROP TRIGGER trg_ocorrencia_quem ON ocorrencia"
+  sabotar fiscalizacao.sql "ocorrência reescrita" "DROP TRIGGER trg_ocorrencia_guard ON ocorrencia"
+  sabotar fiscalizacao.sql "notificação alterável" "DROP TRIGGER trg_notificacao_guard ON notificacao"
+  sabotar fiscalizacao.sql "vistoria de qualquer um" "DROP TRIGGER trg_vistoria_quem ON vistoria"
+  sabotar fiscalizacao.sql "vistoria concluída alterável" "DROP TRIGGER trg_vistoria_guard ON vistoria"
+  sabotar fiscalizacao.sql "recebimento sem regra" "DROP TRIGGER trg_recebimento_guard ON recebimento"
+  sabotar fiscalizacao.sql "garantia da obra sem regra" "DROP TRIGGER trg_garantia_obra_guard ON garantia_obra"
+  sabotar fiscalizacao.sql "todo mundo é fiscal" \
+    "CREATE OR REPLACE FUNCTION fn_fiscal_do_contrato(p_usuario uuid, p_contrato uuid, p_em date)
+       RETURNS boolean LANGUAGE sql STABLE AS 'SELECT true'"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"
