@@ -68,7 +68,7 @@ function tabelaDeServicos(servicos, rotuloDoTotal, total) {
 
 function telaInicio() {
   return `<div class="tela">
-    <div class="cabecalho"><div class="cabecalho-texto">
+    <div class="cabecalho"><img class="marca-sobre" src="marca-preta.svg" alt="Marca do Prumo"><div class="cabecalho-texto">
       <div class="migalha">Prumo · Gestão de Obras Públicas</div>
       <h1>Sobre esta prévia</h1>
       <div class="subtitulo">Esta janela mostra como o Prumo está ficando. Os dados são fictícios (município de Exemplo, Contrato ${esc(painel.contrato.numero)}) e nada é gravado: ao fechar, tudo volta ao início.</div>

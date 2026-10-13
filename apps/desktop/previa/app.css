@@ -61,7 +61,12 @@ p { margin: 0; }
   background: var(--azul);
   color: var(--branco);
 }
-.marca { display: flex; align-items: center; gap: 10px; font-size: 17px; }
+.marca { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+/* A marca do Prumo acompanha o nome do produto; o brasão acompanha o nome do município. */
+.marca-prumo { height: 30px; width: auto; }
+.marca-separador { opacity: 0.7; }
+.marca-brasao { opacity: 0.9; }
+.marca-sobre { height: 72px; width: auto; flex: none; }
 .selo-previa {
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 10px;
