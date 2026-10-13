@@ -4,6 +4,7 @@
 mod comum;
 
 use comum::conectar;
+use prumo_dominio::fluxo::diario::{self, AcaoDiario, EstadoDiario};
 use prumo_dominio::fluxo::medicao::{
     transitar, AcaoMedicao, EstadoMedicao, RegrasDaMedicao, SituacaoDaMedicao,
 };
@@ -96,6 +97,73 @@ fn transicoes_da_medicao_sao_as_mesmas_no_rust_e_no_sql() {
     assert_eq!(permitidas, 10);
     println!(
         "fluxo da medição: {} estados e {} ações com os mesmos nomes; {comparadas} combinações iguais no Rust e no SQL, {permitidas} permitidas",
+        estados.len(),
+        acoes.len()
+    );
+}
+
+fn rotulos(banco: &mut postgres::Client, tipo: &str) -> Vec<String> {
+    banco
+        .query(
+            "SELECT e.enumlabel FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
+              WHERE t.typname = $1 ORDER BY e.enumsortorder",
+            &[&tipo],
+        )
+        .expect("rótulos do tipo")
+        .iter()
+        .map(|l| l.get(0))
+        .collect()
+}
+
+#[test]
+#[ignore = "precisa do banco: rode scripts/db-test.sh paridade"]
+fn transicoes_do_diario_sao_as_mesmas_no_rust_e_no_sql() {
+    let mut banco = conectar();
+    let estados: Vec<String> = EstadoDiario::TODOS
+        .iter()
+        .map(|e| e.nome().to_string())
+        .collect();
+    let acoes: Vec<String> = AcaoDiario::TODAS
+        .iter()
+        .map(|a| a.codigo().to_string())
+        .collect();
+    assert_eq!(
+        rotulos(&mut banco, "status_rdo"),
+        estados,
+        "estados do diário"
+    );
+    assert_eq!(rotulos(&mut banco, "acao_rdo"), acoes, "ações do diário");
+
+    let (mut comparadas, mut permitidas) = (0, 0);
+    for estado in EstadoDiario::TODOS {
+        for acao in AcaoDiario::TODAS {
+            let linha = banco
+                .query_one(
+                    "SELECT fn_transicao_rdo($1::text::status_rdo, $2::text::acao_rdo)::text",
+                    &[&estado.nome(), &acao.codigo()],
+                )
+                .expect("fn_transicao_rdo");
+            let no_sql: Option<&str> = linha.get(0);
+            let esperado = Papel::TODOS.iter().find_map(|papel| {
+                let pedido = Pedido {
+                    quem: PessoaId(99),
+                    papel: *papel,
+                    motivo: Some("motivo"),
+                };
+                diario::transitar(estado, acao, &pedido, Some(PessoaId(1)))
+                    .ok()
+                    .map(|e| e.nome())
+            });
+            assert_eq!(no_sql, esperado, "{estado:?} + {acao:?}: SQL × Rust");
+            comparadas += 1;
+            if esperado.is_some() {
+                permitidas += 1;
+            }
+        }
+    }
+    assert_eq!(permitidas, 4);
+    println!(
+        "fluxo do diário: {} estados e {} ações com os mesmos nomes; {comparadas} combinações iguais no Rust e no SQL, {permitidas} permitidas",
         estados.len(),
         acoes.len()
     );

@@ -287,7 +287,7 @@ suite_migracoes() {
 
 # Regras em Rust contra o SQL, mesma entrada e mesmo centavo. Os testes do crate
 # prumo-paridade são #[ignore]: só rodam aqui, com o banco de pé.
-PARIDADES_ESPERADAS=7
+PARIDADES_ESPERADAS=8
 suite_paridade() {
   local log="$SAIDA/paridade.log" rodados
   passo "paridade: Rust × SQL, com o banco de pé"
@@ -300,7 +300,7 @@ suite_paridade() {
     falhar "paridade Rust × SQL"
   fi
   # Com --nocapture a frase do teste sai na mesma linha do nome dele.
-  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo|fluxo da medição): .*" "$log" | sed 's/^/  /' || true
+  grep -oE "(valor de item|seed × prévia|contratos sorteados|aditivo e boletim|fator do art\. 127|percentual e preço de item novo|fluxo da medição|fluxo do diário): .*" "$log" | sed 's/^/  /' || true
   # Um filtro errado rodaria zero testes e "passaria": exige a contagem.
   rodados="$(grep -E '^test result: ok\. [0-9]+ passed' "$log" | awk '{ s += $4 } END { print s + 0 }')"
   [ "$rodados" -ge "$PARIDADES_ESPERADAS" ] ||
@@ -393,6 +393,12 @@ suite_sabotagem() {
   sabotar medicao_fluxo.sql "glosa sem regra" "DROP TRIGGER trg_medicao_glosa_guard ON medicao_glosa"
   sabotar medicao_fluxo.sql "referência financeira alterável pelo dono" "DROP TRIGGER trg_execucao_financeira_imutavel ON execucao_financeira_ref; GRANT UPDATE ON execucao_financeira_ref TO app_rw"
   sabotar estrutura.sql "aplicação reescreve a trilha da medição" "GRANT UPDATE ON medicao_etapa TO app_rw"
+  sabotar diario.sql "situação do diário muda sem etapa" "DROP TRIGGER trg_rdo_guard ON rdo"
+  sabotar diario.sql "etapa do diário sem conferência" "DROP TRIGGER trg_rdo_etapa ON rdo_etapa"
+  sabotar diario.sql "conteúdo do dia fechado alterável" "DROP TRIGGER trg_rdo_conteudo_guard ON rdo_ocorrencia"
+  sabotar diario.sql "efetivo do dia fechado alterável" "DROP TRIGGER trg_rdo_conteudo_guard ON rdo_efetivo"
+  sabotar diario.sql "instrução do fiscal por qualquer um" "DROP TRIGGER trg_rdo_instrucao_guard ON rdo_instrucao"
+  sabotar diario.sql "dois diários no mesmo dia" "DROP INDEX ux_rdo_dia"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"

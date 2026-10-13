@@ -60,6 +60,16 @@ impl AcaoDiario {
         AcaoDiario::Devolver,
     ];
 
+    /// Nome da ação no banco (`acao_rdo`).
+    pub fn codigo(self) -> &'static str {
+        match self {
+            AcaoDiario::Fechar => "fechar",
+            AcaoDiario::IniciarValidacao => "iniciar_validacao",
+            AcaoDiario::Validar => "validar",
+            AcaoDiario::Devolver => "devolver",
+        }
+    }
+
     pub fn nome(self) -> &'static str {
         match self {
             AcaoDiario::Fechar => "fechar o diário",
