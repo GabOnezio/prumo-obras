@@ -31,6 +31,6 @@ O autor pediu um executável de Windows na Área de Trabalho, em Tauri e Rust, p
 - A prévia mostra telas que parecem prontas. O menu marca "desenho" nas que têm números fixos, e a primeira tela diz o que é cálculo, o que é desenho e o que não existe.
 - Nenhum modelo de IA roda na prévia. Onde haverá sugestão, aparece o cartão "desligada nesta prévia".
 - A fonte é a do sistema (Segoe UI) em vez da Source Sans 3 do canvas: a prévia não carrega nada da rede.
-- O ícone é provisório, desenhado por código. O identificador do app é `io.github.gabonezio.prumo`, até haver domínio (questão 12).
+- O ícone deixou de ser provisório em 13/10/2026: é a marca do Prumo (`marca/README.md`). O identificador do app é `io.github.gabonezio.prumo`, até haver domínio (questão 12).
 - O executável não é assinado e não tem instalador. Assinatura e instalador são da Fase 6 (`09-distribuicao.md`).
 - Não há `rust-toolchain.toml`: a prévia compila com o Rust estável instalado no WSL e no Windows.

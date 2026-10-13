@@ -24,6 +24,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); 
 - **`scripts/build-windows.sh` corrigido:** se o Windows não respondesse ao WSL, o script lia o log da compilação anterior e copiava um executável antigo dizendo "Pronto". Agora apaga o log antes de compilar e para com erro. O `Prumo.exe` da Área de Trabalho foi recompilado com esta branch e conferido pela porta de depuração.
 - **Números da fase:** 9 migrações e 74 tabelas; 12 arquivos de teste de banco com 347 bloqueios e 196 conferências em PostgreSQL 16 real; porte da `0001` igual à referência em 687 fatos do catálogo; 9 testes de paridade Rust × SQL; 111 sabotagens, todas percebidas pelos testes; 112 testes no domínio.
 
+### Marca e ícones (branch `marca-e-icones`)
+- **Marca gráfica do Prumo** em `marca/`: o vetor e os arquivos do pacote fornecido pelo autor, com as regras de uso.
+- **`scripts/gerar-icones.sh`** gera do vetor os ícones do programa de desktop, do Android, da Apple, do cliente web e do Linux.
+- **O `Prumo.exe` tem o ícone novo**, a marca sobre um azulejo branco: a versão transparente do pacote some na barra de tarefas escura.
+- **Prévia:** a marca aparece no cabeçalho, junto do nome "Prumo", e na tela "Sobre". O brasão do município continua com o lugar dele, junto do nome da cidade.
+- Os ícones de celular estão prontos em `marca/android` e `marca/apple`, mas não estão ligados a nada: `apps/mobile` ainda não existe.
+
 ### Alterado
 - **Nome do produto: Prumo** (antes "SGOP", nome de trabalho). Repositório e pasta `prumo-obras`; artefatos com prefixo `prumo-`; marca na tela "Prumo · Prefeitura de ___" com o brasão do município; IA como "Prumo + RREIA" e, em venda, "Prumo IA Local" (ADR 0001).
 - **Eventos passam a ser a forma prioritária de medir**; o boletim de medição por quantidade é a segunda forma. Os cinco perfis de acompanhamento viram recortes dessas duas formas (ADR 0002).

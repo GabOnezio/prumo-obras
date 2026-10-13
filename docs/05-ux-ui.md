@@ -26,7 +26,7 @@
 | Tipografia | Sans-serif legível (ex.: Inter ou Source Sans 3), números **tabulares** em tabelas e valores |
 | Densidade | Desktop: densa (tabelas). Mobile: espaçosa. Alternância "confortável / compacta" |
 | Ícones | Conjunto único (ex.: Lucide), mesmo traço |
-| Marca | No cabeçalho: **"Prumo · Prefeitura de ___"**, com o **brasão do município** à esquerda. O brasão e o nome da cidade são configuração do município; "Prumo" é fixo. Tema (cor principal) configurável por município. Tela de entrada e instalador: "Prumo — Gestão de Obras Públicas" |
+| Marca | No cabeçalho: **"Prumo · Prefeitura de ___"**, com a **marca do Prumo** antes do nome do produto e o **brasão do município** antes do nome da cidade. A marca é branca sobre a barra colorida; arquivos e regras em `marca/README.md`. O brasão e o nome da cidade são configuração do município; "Prumo" é fixo. Tema (cor principal) configurável por município. Tela de entrada e instalador: "Prumo — Gestão de Obras Públicas" |
 | Nome da IA | Para o usuário final, só o selo "Sugestão" e o título "Sugestão da IA local". No console do Admin: "Console de IA (RREIA)". Em material de venda: "Prumo IA Local" |
 
 Definir **tokens** (cor, espaço, raio, sombra, tipografia) em `ui/design-system/tokens` e nunca usar valor solto em componente.
@@ -37,7 +37,7 @@ Definir **tokens** (cor, espaço, raio, sombra, tipografia) em `ui/design-system
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│ [Brasão] Prumo · Prefeitura de ____  🔍 Buscar obra/contrato   🔔 3  ⚙  👤 Maria │
+│ [Marca] Prumo · [Brasão] Prefeitura de ____  🔍 Buscar obra   🔔 3  ⚙  👤 Maria │
 ├────────────┬──────────────────────────────────────────────────────────────────┤
 │ ◉ Início   │  Contrato 045/2026 · Ampliação da Escola Municipal · por eventos │
 │ ▤ Obras    │  [Resumo] [Eventos] [Planilha] [Cronograma] [Projeto] [Diário]   │

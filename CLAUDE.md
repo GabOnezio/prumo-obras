@@ -73,6 +73,7 @@ Ver `docs/03-arquitetura.md`. Resumo:
 ## 6. UI
 
 - Siga `docs/05-ux-ui.md`. Tokens em `ui/design-system`; sem cor/valor solto em componente.
+- Marca: `marca/README.md`. A marca do Prumo acompanha o nome do produto e o brasão acompanha o nome do município; um não ocupa o lugar do outro. Ícones saem do vetor por `scripts/gerar-icones.sh`; não edite os gerados à mão.
 - Formatos brasileiros (R$, dd/mm/aaaa, vírgula decimal). Acessibilidade WCAG 2.2 AA e eMAG. Estados: vazio, carregando, erro, sem permissão, offline, sincronizando, rejeitado, somente leitura.
 - Sugestão de IA sempre com o componente padrão (✨ Sugestão · Aceitar/Editar/Rejeitar · Por quê · confiança em 3 níveis).
 - Previsão sempre com o componente padrão (selo "Previsão" · "Como foi calculado" · sem aceitar/rejeitar). Três selos distintos: Regra, Sugestão, Previsão.
@@ -89,6 +90,7 @@ Ver `docs/03-arquitetura.md`. Resumo:
                                                    #   referencia, porte, migracoes, paridade, sabotagem (sem nome: todas)
 ./scripts/db-test.sh registrar                     # anota o SHA-256 de migração nova em db/migrations/SHA256SUMS
 cargo test -p prumo-dominio -p prumo-demonstracao   # leve; roda no WSL
+./scripts/gerar-icones.sh                          # refaz os ícones do programa e dos apps a partir do vetor da marca
 ./scripts/build-windows.sh                         # compila a prévia no Windows e copia o Prumo.exe para a Área de Trabalho
                                                    # (--sem-copiar só compila; a primeira vez leva uns 10 minutos)
 
