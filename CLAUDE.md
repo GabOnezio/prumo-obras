@@ -78,6 +78,9 @@ Ver `docs/03-arquitetura.md`. Resumo:
 
 ```bash
 # já existem:
+./scripts/ci-local.sh                              # porteiro antes de cada commit: fmt, clippy e testes dos crates leves
+./scripts/ci-local.sh --tudo                       # uma vez por etapa: workspace inteiro, banco, cargo audit e cargo deny
+./scripts/db-test.sh                               # regras do banco em PostgreSQL 16 descartável (Docker)
 cargo test -p prumo-dominio -p prumo-demonstracao   # leve; roda no WSL
 ./scripts/build-windows.sh                         # compila a prévia no Windows e copia o Prumo.exe para a Área de Trabalho
                                                    # (--sem-copiar só compila; a primeira vez leva uns 10 minutos)
