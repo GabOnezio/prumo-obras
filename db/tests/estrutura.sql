@@ -29,8 +29,27 @@ SELECT pg_temp.confere_vazio('política restritiva ou limitada a um papel (revis
   SELECT tablename || '.' || policyname FROM pg_policies
    WHERE schemaname = 'public' AND (permissive <> 'PERMISSIVE' OR roles <> '{public}')$$);
 
--- Tabela sem tenant_id não é protegida por RLS. Só entra aqui de propósito:
---   tenant             o próprio cadastro dos municípios (ganha RLS na 0002)
+-- A conferência de chave estrangeira não passa pela RLS. Sem o tenant na chave, uma linha
+-- de um município poderia apontar para registro de outro (ADR 0007).
+SELECT pg_temp.confere_vazio('chave estrangeira entre tabelas com tenant que não leva o tenant', $$
+  SELECT origem.relname || '.' || k.conname
+    FROM pg_constraint k
+    JOIN pg_class origem  ON origem.oid = k.conrelid
+    JOIN pg_class destino ON destino.oid = k.confrelid
+    JOIN pg_namespace n   ON n.oid = origem.relnamespace
+   WHERE n.nspname = 'public' AND k.contype = 'f' AND destino.relname <> 'tenant'
+     AND EXISTS (SELECT FROM pg_attribute a WHERE a.attrelid = k.conrelid AND a.attname = 'tenant_id' AND a.attnotnull)
+     AND EXISTS (SELECT FROM pg_attribute a WHERE a.attrelid = k.confrelid AND a.attname = 'tenant_id' AND a.attnotnull)
+     AND NOT EXISTS (SELECT FROM pg_attribute a WHERE a.attrelid = k.conrelid AND a.attname = 'tenant_id'
+                        AND a.attnum = ANY (k.conkey))
+     -- a chave original fica; a que leva o tenant tem o mesmo nome mais "_tnt"
+     AND NOT EXISTS (SELECT FROM pg_constraint j
+                      JOIN pg_attribute a ON a.attrelid = j.conrelid AND a.attname = 'tenant_id' AND a.attnum = ANY (j.conkey)
+                     WHERE j.conrelid = k.conrelid AND j.contype = 'f' AND j.confrelid = k.confrelid
+                       AND j.conkey @> k.conkey)$$);
+
+-- Tabela sem tenant_id só entra aqui de propósito:
+--   tenant             o cadastro dos municípios; tem RLS própria (cada um só lê a sua linha)
 --   migracao_aplicada  registro das migrações, que a aplicação não acessa
 SELECT pg_temp.confere_vazio('tabela sem tenant_id fora da lista conhecida', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -81,6 +100,11 @@ SELECT pg_temp.confere_vazio('app_rw grava em tabela sem RLS', $$
      AND (has_table_privilege('app_rw', c.oid, 'INSERT') OR has_table_privilege('app_rw', c.oid, 'UPDATE')
           OR has_table_privilege('app_rw', c.oid, 'DELETE'))$$);
 
+SELECT pg_temp.confere_vazio('app_rw executa a função de fecho de migração', $$
+  SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'prumo_fechar_migracao'
+     AND has_function_privilege('app_rw', p.oid, 'EXECUTE')$$);
+
 SELECT pg_temp.confere_vazio('app_rw com TRUNCATE, REFERENCES ou TRIGGER em alguma tabela', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p')
@@ -102,6 +126,13 @@ SELECT pg_temp.confere_vazio('tabela com RLS que a aplicação não consegue ler
 SELECT pg_temp.confere_vazio('visão que a aplicação não consegue ler', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
    WHERE n.nspname = 'public' AND c.relkind = 'v' AND NOT has_table_privilege('app_rw', c.oid, 'SELECT')$$);
+
+-- Cadastrar e alterar município é da instalação, não da aplicação.
+SELECT pg_temp.confere_vazio('app_rw grava no cadastro de municípios', $$
+  SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = 'tenant'
+     AND (has_table_privilege('app_rw', c.oid, 'INSERT') OR has_table_privilege('app_rw', c.oid, 'UPDATE')
+          OR has_table_privilege('app_rw', c.oid, 'DELETE'))$$);
 
 -- Registros que só crescem: a aplicação lê e acrescenta, nunca altera nem apaga.
 SELECT pg_temp.confere_vazio('app_rw altera ou apaga registro que só cresce', $$

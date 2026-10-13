@@ -5,8 +5,8 @@
 
 -- Quem cadastra município é a instalação, não a aplicação. CNPJs com dígito inválido, de propósito.
 INSERT INTO tenant (id, razao_social, cnpj) VALUES
-  (:a, 'Município de Exemplo',       '00000000000001'),
-  (:b, 'Município de Outro Exemplo', '00000000000002');
+  (:a, 'Município de Exemplo A', '00000000000001'),
+  (:b, 'Município de Exemplo B', '00000000000002');
 
 -- Mesmos cadastros nos dois: órgão, obra, contrato, planilha de um serviço e uma medição.
 CREATE PROCEDURE pg_temp.cria_obra(p_tenant uuid, p_nome text) LANGUAGE plpgsql AS $$
@@ -98,6 +98,8 @@ SELECT pg_temp.confere('A: boletim da medição do município B', (SELECT count(
 SELECT pg_temp.confere('A: limites de aditivo do contrato do município B',
   (SELECT count(*) FROM fn_limites_aditivos(:'contrato_b')), 0);
 SELECT pg_temp.confere('A: município B no cadastro pelo id', (SELECT count(*) FROM obra WHERE id = :'obra_b'), 0);
+SELECT pg_temp.confere('A: municípios que enxerga no cadastro de municípios', (SELECT count(*) FROM tenant), 1);
+SELECT pg_temp.confere_texto('A: o município que enxerga é o seu', (SELECT razao_social FROM tenant), 'Município de Exemplo A');
 
 \echo
 \echo '== Município A não grava nem altera o que é do B =='
@@ -105,6 +107,16 @@ CALL pg_temp.espera_erro('A gravar linha com o tenant do B', ARRAY[
   format($$INSERT INTO obra (tenant_id, nome, municipio, uf) VALUES (%L, 'Intrusa', 'X', 'PR')$$, :b)]);
 CALL pg_temp.espera_erro('A transferir uma linha sua para o B', ARRAY[
   format($$UPDATE obra SET tenant_id = %L$$, :b)]);
+-- A chave estrangeira leva o tenant: saber o id de um registro do B não basta para apontar para ele.
+CALL pg_temp.espera_erro_com('A gravar contrato seu apontando para a obra do B', 'contrato_obra_id_fkey_tnt', ARRAY[
+  format($$INSERT INTO contrato (obra_id, orgao_id, numero, processo_licitatorio, objeto, regime_execucao, data_assinatura,
+                                data_base_orcamento, prazo_execucao_dias, vigencia_fim, valor_inicial, valor_orcamento_base,
+                                bdi_percentual)
+           SELECT %L, id, '002/2026', 'x', 'x', 'empreitada_preco_unitario', '2026-01-05', '2025-10-01', 90, '2026-06-30',
+                  10, 10, 0 FROM orgao$$, :'obra_b')]);
+CALL pg_temp.espera_erro_com('A lançar item seu na medição do B', '_tnt', ARRAY[
+  format($$INSERT INTO medicao_glosa (medicao_id, item_contratual_id, quantidade, valor, motivo)
+           SELECT %L, id, 1, 1, 'x' FROM item_contratual LIMIT 1$$, :'medicao_b')]);
 -- Alterar e apagar o que não se enxerga não dá erro: simplesmente não atinge linha nenhuma.
 WITH x AS (UPDATE obra SET nome = 'Invadida' WHERE id = :'obra_b' RETURNING 1)
 SELECT pg_temp.confere('A: linhas do B alteradas', (SELECT count(*) FROM x), 0);

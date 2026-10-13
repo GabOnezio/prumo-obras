@@ -352,6 +352,19 @@ suite_sabotagem() {
   sabotar isolamento.sql "app_rw apaga a auditoria" "GRANT DELETE ON auditoria TO app_rw"
   sabotar isolamento.sql "app_rw com BYPASSRLS" "ALTER ROLE app_rw BYPASSRLS" "ALTER ROLE app_rw NOBYPASSRLS"
   sabotar isolamento.sql "visão de situação roda como o dono" "ALTER VIEW vw_contrato_situacao SET (security_invoker = false)"
+  sabotar estrutura.sql "chave estrangeira sem o tenant" "ALTER TABLE contrato DROP CONSTRAINT contrato_obra_id_fkey_tnt"
+  sabotar estrutura.sql "cadastro de municípios sem RLS" "ALTER TABLE tenant DISABLE ROW LEVEL SECURITY; GRANT UPDATE ON tenant TO app_rw"
+  sabotar estrutura.sql "aplicação pode chamar o fecho de migração" "GRANT EXECUTE ON FUNCTION prumo_fechar_migracao() TO app_rw"
+  sabotar isolamento.sql "chave estrangeira sem o tenant" "ALTER TABLE contrato DROP CONSTRAINT contrato_obra_id_fkey_tnt"
+  sabotar isolamento.sql "cadastro de municípios aberto" "CREATE POLICY todos ON tenant FOR SELECT USING (true)"
+  sabotar pessoas.sql "designação sem o gatilho de histórico" "DROP TRIGGER trg_designacao_guard ON designacao"
+  sabotar pessoas.sql "pessoa pode estar dos dois lados" "DROP TRIGGER trg_designacao_dois_lados ON designacao"
+  sabotar pessoas.sql "empresa de fora no contrato" "DROP TRIGGER trg_usuario_externo_guard ON usuario_externo"
+  sabotar pessoas.sql "usuário desativado continua com função" \
+    "CREATE OR REPLACE FUNCTION fn_designado(p_usuario uuid, p_contrato uuid, p_funcoes funcao_designacao[], p_em date)
+       RETURNS boolean LANGUAGE sql STABLE AS 'SELECT EXISTS (SELECT 1 FROM designacao d JOIN servidor s ON s.id = d.servidor_id
+         WHERE s.usuario_id = p_usuario AND d.contrato_id = p_contrato AND d.funcao = ANY (p_funcoes)
+           AND d.inicio <= p_em AND (d.fim IS NULL OR d.fim >= p_em))'"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"

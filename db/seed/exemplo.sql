@@ -17,8 +17,8 @@
 -- Até a migração 0007 a medição por eventos se chama 'ple' no banco, nome herdado da referência.
 -- =============================================================================
 
-INSERT INTO tenant (id, razao_social, cnpj) VALUES
-  ('e0e0e0e0-0000-0000-0000-000000000001', 'Município de Exemplo', '00000000000101');
+INSERT INTO tenant (id, razao_social, cnpj, uf) VALUES
+  ('e0e0e0e0-0000-0000-0000-000000000001', 'Município de Exemplo', '00000000000101', 'PR');
 
 SELECT set_config('app.tenant_id', 'e0e0e0e0-0000-0000-0000-000000000001', false),
        set_config('app.usuario', 'seed.exemplo', false);
@@ -46,6 +46,51 @@ VALUES
    'Pavimentação da Rua das Acácias', 'empreitada_preco_unitario',
    '2026-10-05', '2026-06-01', 120, '2027-04-30', '2026-10-13',
    136595.63, 149800.00, 22.00, 'truncar', 'bm');
+
+-- -----------------------------------------------------------------------------
+-- Empresas contratadas e pessoas. Nomes de função no lugar de nomes de gente, de propósito.
+-- -----------------------------------------------------------------------------
+INSERT INTO empresa (id, razao_social, cnpj) VALUES
+  ('e0e0e0e0-0000-0000-0000-0000000000e1', 'Construtora Fictícia Alfa Ltda',   '00000000000103'),
+  ('e0e0e0e0-0000-0000-0000-0000000000e2', 'Pavimentadora Fictícia Beta Ltda', '00000000000104');
+UPDATE contrato SET empresa_id = 'e0e0e0e0-0000-0000-0000-0000000000e1' WHERE id = 'e0e0e0e0-0000-0000-0000-0000000000c1';
+UPDATE contrato SET empresa_id = 'e0e0e0e0-0000-0000-0000-0000000000e2' WHERE id = 'e0e0e0e0-0000-0000-0000-0000000000c2';
+
+INSERT INTO usuario (id, nome) VALUES
+  ('e0e0e0e0-0000-0000-0001-000000000001', 'Fiscal técnico (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000002', 'Fiscal substituto (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000003', 'Gestor do contrato (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000004', 'Membro da comissão de medição (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000005', 'Preposto da Alfa (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000006', 'Apontador da Alfa (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000007', 'Preposto da Beta (fictício)'),
+  ('e0e0e0e0-0000-0000-0001-000000000008', 'Orçamentista (fictício)');
+
+INSERT INTO servidor (id, usuario_id, matricula, cargo)
+SELECT md5('servidor:' || matricula)::uuid, ('e0e0e0e0-0000-0000-0001-00000000000' || n)::uuid, matricula, cargo
+  FROM (VALUES (1, 'EX-0001', 'Engenheiro civil'), (2, 'EX-0002', 'Engenheiro civil'),
+               (3, 'EX-0003', 'Diretor de obras'), (4, 'EX-0004', 'Técnico em edificações'),
+               (8, 'EX-0008', 'Engenheiro orçamentista')) AS s(n, matricula, cargo);
+
+INSERT INTO portaria (id, numero, data, objeto) VALUES
+  ('e0e0e0e0-0000-0000-0000-0000000000a9', '014/2026', '2026-09-15',
+   'Designa gestor, fiscais e comissão de medição dos contratos 045/2026 e 052/2026');
+
+-- Os mesmos quatro servidores nos dois contratos, a partir da data da portaria.
+INSERT INTO designacao (servidor_id, contrato_id, funcao, inicio, portaria_id)
+SELECT md5('servidor:' || d.matricula)::uuid, c.id, d.funcao::funcao_designacao, DATE '2026-09-15',
+       'e0e0e0e0-0000-0000-0000-0000000000a9'
+  FROM (VALUES ('EX-0001', 'fiscal_tecnico'), ('EX-0002', 'fiscal_substituto'),
+               ('EX-0003', 'gestor_contrato'), ('EX-0004', 'comissao_medicao')) AS d(matricula, funcao)
+ CROSS JOIN contrato c;
+
+INSERT INTO usuario_externo (usuario_id, empresa_id, contrato_id, papel, inicio) VALUES
+  ('e0e0e0e0-0000-0000-0001-000000000005', 'e0e0e0e0-0000-0000-0000-0000000000e1',
+   'e0e0e0e0-0000-0000-0000-0000000000c1', 'preposto', '2026-09-14'),
+  ('e0e0e0e0-0000-0000-0001-000000000006', 'e0e0e0e0-0000-0000-0000-0000000000e1',
+   'e0e0e0e0-0000-0000-0000-0000000000c1', 'apontador', '2026-09-14'),
+  ('e0e0e0e0-0000-0000-0001-000000000007', 'e0e0e0e0-0000-0000-0000-0000000000e2',
+   'e0e0e0e0-0000-0000-0000-0000000000c2', 'preposto', '2026-10-05');
 
 -- Retenção ilustrativa, a mesma da prévia. Alíquota e base reais vêm do contrato de cada obra.
 INSERT INTO contrato_retencao (contrato_id, tipo, aliquota, base_percentual) VALUES
