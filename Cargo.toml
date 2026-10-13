@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/dominio",
     "crates/demonstracao",
+    "crates/paridade",
     "apps/desktop/src-tauri",
 ]
 

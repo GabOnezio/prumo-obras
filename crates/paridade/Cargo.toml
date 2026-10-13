@@ -1,0 +1,12 @@
+[package]
+name = "prumo-paridade"
+description = "Testes de paridade entre as regras em Rust (prumo-dominio) e o SQL do banco. Só testes; precisam do PostgreSQL de pé"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dev-dependencies]
+postgres = "0.19"
+prumo-demonstracao = { path = "../demonstracao" }
+prumo-dominio = { path = "../dominio" }
+rust_decimal.workspace = true

@@ -9,7 +9,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Crates que não dependem do Tauri. Compilam e testam em segundos.
-LEVES=(-p prumo-dominio -p prumo-demonstracao)
+# Os testes do prumo-paridade precisam do banco e só rodam em scripts/db-test.sh paridade;
+# aqui ele entra para a formatação, o clippy e a compilação.
+LEVES=(-p prumo-dominio -p prumo-demonstracao -p prumo-paridade)
 # A máquina tem pouca memória; dois processos do compilador por vez.
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 

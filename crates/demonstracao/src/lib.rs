@@ -12,8 +12,8 @@ use chrono::{Datelike, NaiveDate};
 use dados::*;
 use prumo_dominio::{
     conferir_medicao, desvio_trabalhavel, formatar_decimal, percentual, prever, prever_pagamento,
-    Andamento, Calendario, Dinheiro, ErroDominio, Evento, EventoDeclarado, EventoProgramado,
-    FechamentoMedicao, Metodo, Parametros, ServicoNaFrente, SituacaoEvento,
+    Andamento, Calendario, CriterioArredondamento, Dinheiro, ErroDominio, Evento, EventoDeclarado,
+    EventoProgramado, FechamentoMedicao, Metodo, Parametros, ServicoNaFrente, SituacaoEvento,
 };
 use rust_decimal::Decimal;
 use serde::Serialize;
@@ -832,6 +832,14 @@ impl Mes {
             retencoes: Dinheiro::ZERO,
         }
     }
+}
+
+/// Planilha da obra fictícia, já distribuída em eventos, e o critério do contrato.
+///
+/// O seed do banco (`db/seed/exemplo.sql`, contrato 045/2026) tem que trazer os mesmos
+/// serviços, quantidades e preços. `crates/paridade` confere os dois, linha a linha.
+pub fn planilha_por_eventos() -> (Vec<Evento>, CriterioArredondamento) {
+    ((0..EVENTOS.len()).map(evento).collect(), CRITERIO)
 }
 
 fn valores_dos_eventos() -> Result<Vec<Dinheiro>, ErroDominio> {
