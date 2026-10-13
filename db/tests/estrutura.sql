@@ -151,5 +151,6 @@ SELECT pg_temp.confere_vazio('app_rw apaga registro que não se apaga', $$
 
 SELECT pg_temp.confere_vazio('app_rw altera ou apaga registro que só cresce', $$
   SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-   WHERE n.nspname = 'public' AND c.relname IN ('auditoria', 'medicao_etapa', 'execucao_financeira_ref', 'rdo_etapa', 'rdo_instrucao')
+   WHERE n.nspname = 'public' AND c.relname IN ('auditoria', 'medicao_etapa', 'execucao_financeira_ref', 'rdo_etapa', 'rdo_instrucao',
+                                               'documento_orgao')
      AND (has_table_privilege('app_rw', c.oid, 'UPDATE') OR has_table_privilege('app_rw', c.oid, 'DELETE'))$$);

@@ -18,9 +18,9 @@ BEGIN
   INSERT INTO obra (nome, municipio, uf) VALUES ('Reforma da praça', p_nome, 'PR') RETURNING id INTO v_obra;
   INSERT INTO contrato (obra_id, orgao_id, numero, processo_licitatorio, objeto, regime_execucao, data_assinatura,
                         data_base_orcamento, prazo_execucao_dias, vigencia_fim, valor_inicial, valor_orcamento_base,
-                        bdi_percentual)
+                        bdi_percentual, forma_acompanhamento)
     VALUES (v_obra, v_orgao, '001/2026', 'Concorrência nº 01/2026', 'Reforma da praça', 'empreitada_preco_unitario',
-            '2026-01-05', '2025-10-01', 90, '2026-06-30', 1000.00, 1100.00, 25)
+            '2026-01-05', '2025-10-01', 90, '2026-06-30', 1000.00, 1100.00, 25, 'bm')
     RETURNING id INTO v_ctr;
   INSERT INTO revisao_orcamento (contrato_id, numero, origem) VALUES (v_ctr, 0, 'importacao') RETURNING id INTO v_rev;
   INSERT INTO item_contratual (contrato_id) VALUES (v_ctr) RETURNING id INTO v_ic_grupo;
@@ -111,9 +111,9 @@ CALL pg_temp.espera_erro('A transferir uma linha sua para o B', ARRAY[
 CALL pg_temp.espera_erro_com('A gravar contrato seu apontando para a obra do B', 'contrato_obra_id_fkey_tnt', ARRAY[
   format($$INSERT INTO contrato (obra_id, orgao_id, numero, processo_licitatorio, objeto, regime_execucao, data_assinatura,
                                 data_base_orcamento, prazo_execucao_dias, vigencia_fim, valor_inicial, valor_orcamento_base,
-                                bdi_percentual)
+                                bdi_percentual, forma_acompanhamento)
            SELECT %L, id, '002/2026', 'x', 'x', 'empreitada_preco_unitario', '2026-01-05', '2025-10-01', 90, '2026-06-30',
-                  10, 10, 0 FROM orgao$$, :'obra_b')]);
+                  10, 10, 0, 'bm' FROM orgao$$, :'obra_b')]);
 CALL pg_temp.espera_erro_com('A gravar retenção sua no contrato do B', 'contrato_retencao_contrato_id_fkey_tnt', ARRAY[
   format($$INSERT INTO contrato_retencao (contrato_id, tipo, aliquota) VALUES (%L, 'ISS', 5)$$, :'contrato_b')]);
 -- Alterar e apagar o que não se enxerga não dá erro: simplesmente não atinge linha nenhuma.

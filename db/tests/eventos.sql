@@ -139,10 +139,13 @@ CALL pg_temp.espera_erro('o mesmo serviço duas vezes na mesma frente', ARRAY[
   $$INSERT INTO item_frente (item_revisao_id, frente_id, quantidade) VALUES
       ('e0e0e0e0-0000-0000-0000-000000000219', 'e0e0e0e0-0000-0000-0000-000000000fa9', 1)$$]);
 
--- Valor de evento digitado com a planilha em rascunho não sobrevive: ao ficar vigente, o banco recalcula.
-INSERT INTO evento (revisao_id, agrupador_id, frente_id, valor) VALUES
-  ('e0e0e0e0-0000-0000-0000-0000000000d9', 'e0e0e0e0-0000-0000-0000-000000000a99',
-   'e0e0e0e0-0000-0000-0000-000000000fa9', 999.99);
+-- Evento é sempre calculado. Nem com a planilha em rascunho se grava um à mão, com valor digitado.
+CALL pg_temp.espera_erro_com('criar evento à mão com a planilha em rascunho', 'calculado pelo sistema', ARRAY[
+  $$INSERT INTO evento (revisao_id, agrupador_id, frente_id, valor) VALUES
+      ('e0e0e0e0-0000-0000-0000-0000000000d9', 'e0e0e0e0-0000-0000-0000-000000000a99',
+       'e0e0e0e0-0000-0000-0000-000000000fa9', 999.99)$$]);
+CALL pg_temp.espera_erro_com('pedir o cálculo dos eventos à mão, antes de publicar', 'calculado pelo sistema', ARRAY[
+  $$SELECT fn_recalcular_eventos('e0e0e0e0-0000-0000-0000-0000000000d9')$$]);
 UPDATE item_frente SET quantidade = 6.00
  WHERE item_revisao_id = 'e0e0e0e0-0000-0000-0000-000000000229' AND frente_id = 'e0e0e0e0-0000-0000-0000-000000000fb9';
 UPDATE revisao_orcamento SET status = 'vigente', data_vigencia = DATE '2026-09-14'
@@ -150,7 +153,7 @@ UPDATE revisao_orcamento SET status = 'vigente', data_vigencia = DATE '2026-09-1
 
 \echo
 \echo '== O valor do evento arredonda serviço a serviço, em cada frente =='
--- Bloco A: 1,50 × 0,33 = 0,495 → 0,50 · 4,00 × 12,50 = 50,00 (e não os 999,99 digitados)
+-- Bloco A: 1,50 × 0,33 = 0,495 → 0,50 · 4,00 × 12,50 = 50,00
 SELECT pg_temp.confere('Piso × Bloco A', (SELECT valor FROM evento WHERE id = pg_temp.evento_do_agrupador('T-01/2026', 1, 'Bloco A')), 50.50);
 -- Bloco B: 1,50 × 0,33 = 0,495 → 0,50 · 6,00 × 12,50 = 75,00
 SELECT pg_temp.confere('Piso × Bloco B', (SELECT valor FROM evento WHERE id = pg_temp.evento_do_agrupador('T-01/2026', 1, 'Bloco B')), 75.50);
@@ -174,21 +177,21 @@ CALL pg_temp.espera_erro_com('acrescentar frente a um serviço',
     SELECT id, 'e0e0e0e0-0000-0000-0000-000000000fb9', 1 FROM item_revisao
      WHERE id = 'e0e0e0e0-0000-0000-0000-000000000219'$$]);
 CALL pg_temp.espera_erro_com('alterar o valor de um evento',
-  'só têm o período previsto alterável', ARRAY[
+  'calculado pelo sistema', ARRAY[
   format($$UPDATE evento SET valor = valor + 0.01 WHERE revisao_id = %L$$, :'rev_ev')]);
 CALL pg_temp.espera_erro_com('trocar a frente de um evento',
-  'só têm o período previsto alterável', ARRAY[
+  'calculado pelo sistema', ARRAY[
   $$UPDATE evento SET frente_id = 'e0e0e0e0-0000-0000-0000-000000000fb9'
      WHERE id = pg_temp.evento_do_agrupador('T-01/2026', 1, 'Bloco A')$$]);
 CALL pg_temp.espera_erro_com('apagar um evento',
-  'só têm o período previsto alterável', ARRAY[format($$DELETE FROM evento WHERE revisao_id = %L$$, :'rev_ev')]);
+  'calculado pelo sistema', ARRAY[format($$DELETE FROM evento WHERE revisao_id = %L$$, :'rev_ev')]);
 CALL pg_temp.espera_erro_com('criar um evento à mão',
-  'só têm o período previsto alterável', ARRAY[
+  'calculado pelo sistema', ARRAY[
   format($$INSERT INTO evento (revisao_id, agrupador_id, frente_id, valor)
            SELECT %L, a.id, 'e0e0e0e0-0000-0000-0000-0000000000f1', 1 FROM agrupador_evento a
             WHERE a.contrato_id = %L AND a.numero = 1$$, :'rev_ev', :'c_ev')]);
 CALL pg_temp.espera_erro_com('recalcular os eventos de planilha vigente',
-  'só têm o período previsto alterável', ARRAY[
+  'calculado pelo sistema', ARRAY[
   format($$SELECT fn_recalcular_eventos(%L)$$, :'rev_ev')]);
 CALL pg_temp.espera_erro_com('trocar o agrupador de um serviço',
   'itens só podem mudar em rascunho', ARRAY[

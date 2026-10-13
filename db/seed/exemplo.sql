@@ -215,3 +215,52 @@ UPDATE evento e SET periodo_previsto = p.periodo
        (VALUES (1, 2), (2, 3), (3, 4), (4, 5), (5, 7), (6, 8)) AS p(numero, periodo)
  WHERE a.id = e.agrupador_id AND a.numero = p.numero
    AND e.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d1';
+
+-- -----------------------------------------------------------------------------
+-- Documentos do órgão, linha de base do cronograma e calendário. Quem registra é o orçamentista.
+-- Os hashes são inventados: não há arquivo nenhum por trás deste seed.
+-- -----------------------------------------------------------------------------
+SELECT set_config('app.usuario_id', 'e0e0e0e0-0000-0000-0001-000000000008', false);
+
+INSERT INTO documento_orgao (id, contrato_id, tipo, nome, arquivo_sha256, chave_arquivo, recebido_em)
+SELECT md5('documento:' || c.numero || ':' || d.tipo)::uuid, c.id, d.tipo, d.tipo || ' do contrato ' || c.numero,
+       md5(c.numero || d.tipo) || md5(d.tipo || c.numero), 'ficticio/' || replace(c.numero, '/', '-') || '/' || d.tipo, c.data_assinatura
+  FROM contrato c CROSS JOIN (VALUES ('planilha'), ('cronograma')) AS d(tipo);
+
+INSERT INTO cronograma_versao (id, contrato_id, revisao_id, numero, tipo, documento_id) VALUES
+  ('e0e0e0e0-0000-0000-0000-0000000000a1', 'e0e0e0e0-0000-0000-0000-0000000000c1',
+   'e0e0e0e0-0000-0000-0000-0000000000d1', 0, 'linha_de_base', md5('documento:045/2026:cronograma')::uuid),
+  ('e0e0e0e0-0000-0000-0000-0000000000a2', 'e0e0e0e0-0000-0000-0000-0000000000c2',
+   'e0e0e0e0-0000-0000-0000-0000000000d2', 0, 'linha_de_base', md5('documento:052/2026:cronograma')::uuid);
+
+-- Contrato por eventos: as mesmas datas da prévia de desktop, cada evento depois do anterior.
+INSERT INTO cronograma_evento (cronograma_versao_id, evento_id, inicio_previsto, termino_previsto)
+SELECT 'e0e0e0e0-0000-0000-0000-0000000000a1', e.id, p.inicio, p.termino
+  FROM evento e JOIN agrupador_evento a ON a.id = e.agrupador_id
+  JOIN (VALUES (1, DATE '2026-09-28', DATE '2026-10-26'), (2, DATE '2026-10-30', DATE '2026-11-30'),
+               (3, DATE '2026-12-01', DATE '2026-12-18'), (4, DATE '2027-01-05', DATE '2027-01-29'),
+               (5, DATE '2027-02-01', DATE '2027-03-19'), (6, DATE '2027-03-22', DATE '2027-04-30')) AS p(numero, inicio, termino)
+    ON p.numero = a.numero
+ WHERE e.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d1';
+
+INSERT INTO cronograma_predecessora (cronograma_versao_id, evento_id, predecessora_evento_id)
+SELECT 'e0e0e0e0-0000-0000-0000-0000000000a1', e.id, antes.id
+  FROM evento e JOIN agrupador_evento a ON a.id = e.agrupador_id
+  JOIN agrupador_evento a_antes ON a_antes.contrato_id = a.contrato_id AND a_antes.numero = a.numero - 1
+  JOIN evento antes ON antes.agrupador_id = a_antes.id AND antes.revisao_id = e.revisao_id
+ WHERE e.revisao_id = 'e0e0e0e0-0000-0000-0000-0000000000d1';
+
+-- Contrato por quantidade: percentual de cada grupo por mês de obra.
+INSERT INTO cronograma_parcela (cronograma_versao_id, revisao_id, item_contratual_id, periodo, percentual)
+SELECT 'e0e0e0e0-0000-0000-0000-0000000000a2', 'e0e0e0e0-0000-0000-0000-0000000000d2',
+       md5('item:c2:' || p.grupo)::uuid, p.periodo, p.percentual
+  FROM (VALUES ('1', 1, 100), ('2', 1, 60), ('2', 2, 40), ('3', 2, 30), ('3', 3, 40), ('3', 4, 30), ('4', 4, 100))
+       AS p(grupo, periodo, percentual);
+
+UPDATE cronograma_versao SET status = 'vigente' WHERE numero = 0;
+
+-- Dias sem expediente do calendário da obra por eventos, os mesmos da prévia.
+INSERT INTO calendario_obra (contrato_id, data, trabalhavel, motivo)
+SELECT 'e0e0e0e0-0000-0000-0000-0000000000c1', d::date, false, 'Sem expediente'
+  FROM unnest(ARRAY['2026-10-12', '2026-11-02', '2026-11-20', '2026-12-25', '2027-01-01', '2027-03-26', '2027-04-21']) AS d;
+

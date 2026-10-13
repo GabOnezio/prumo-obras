@@ -315,9 +315,13 @@ sabotar() { # arquivo-de-teste descrição sql [sql para desfazer o que vale par
   local log="$SAIDA/sabotagem.log"
   novo_banco prumo_teste_caso prumo_teste_modelo
   sql prumo_teste_caso -q -c "$3" >/dev/null 2>&1 || falhar "a sabotagem \"$2\" não aplicou"
-  cat db/tests/_util.sql "db/tests/$1" | sql prumo_teste_caso -q -f - >"$log" 2>&1 || true
+  local percebeu=0
+  # O teste acusa de dois jeitos: uma conferência falha ("TESTE FALHOU") ou o arquivo para
+  # num erro que não era esperado. Nos dois casos a suíte de migrações ficaria vermelha.
+  cat db/tests/_util.sql "db/tests/$1" | sql prumo_teste_caso -q -f - >"$log" 2>&1 || percebeu=1
   [ -z "${4:-}" ] || sql postgres -q -c "$4" >/dev/null
-  grep -q "TESTE FALHOU" "$log" || falhar "sabotagem que o $1 não percebeu: $2"
+  grep -q "TESTE FALHOU" "$log" && percebeu=1
+  [ "$percebeu" -eq 1 ] || falhar "sabotagem que o $1 não percebeu: $2"
   SABOTAGENS=$((SABOTAGENS + 1))
 }
 
@@ -408,6 +412,17 @@ suite_sabotagem() {
   sabotar config_e_ia.sql "denúncia guarda quem denunciou" "ALTER TABLE denuncia ADD COLUMN nome_do_denunciante text"
   sabotar estrutura.sql "dado de negócio aponta para decisão de IA" "ALTER TABLE medicao ADD COLUMN ia_id uuid REFERENCES ia_decisao"
   sabotar estrutura.sql "aplicação apaga registro de IA" "GRANT DELETE ON ia_decisao TO app_rw"
+  sabotar contrato_travas.sql "contrato sem trava" "DROP TRIGGER trg_contrato_guard ON contrato"
+  sabotar contrato_travas.sql "forma de medir com valor padrão" "ALTER TABLE contrato ALTER COLUMN forma_acompanhamento SET DEFAULT 'bm'"
+  sabotar contrato_travas.sql "frente renomeável" "DROP TRIGGER trg_frente_guard ON frente_obra"
+  sabotar contrato_travas.sql "agrupador renomeável" "DROP TRIGGER trg_agrupador_guard ON agrupador_evento"
+  sabotar cronograma.sql "versão do cronograma sem regra" "DROP TRIGGER trg_cronograma_versao_guard ON cronograma_versao"
+  sabotar cronograma.sql "datas da linha de base alteráveis" "DROP TRIGGER trg_cronograma_conteudo_guard ON cronograma_evento"
+  sabotar cronograma.sql "parcelas da linha de base alteráveis" "DROP TRIGGER trg_cronograma_conteudo_guard ON cronograma_parcela"
+  sabotar cronograma.sql "dependências da linha de base alteráveis" "DROP TRIGGER trg_cronograma_conteudo_guard ON cronograma_predecessora"
+  sabotar cronograma.sql "documento do órgão alterável pelo dono" "DROP TRIGGER trg_documento_orgao_imutavel ON documento_orgao"
+  sabotar cronograma.sql "vínculo de prancha sem conferência" "DROP TRIGGER trg_prancha_vinculo_guard ON prancha_vinculo"
+  sabotar estrutura.sql "aplicação altera documento do órgão" "GRANT UPDATE ON documento_orgao TO app_rw"
   sabotar eventos.sql "evento sem o gatilho que o trava" "DROP TRIGGER trg_evento_guard ON evento"
   sabotar eventos.sql "distribuição por frente sem gatilho" "DROP TRIGGER trg_item_frente_guard ON item_frente"
   sabotar eventos.sql "medição por eventos sem gatilho" "DROP TRIGGER trg_medicao_evento_guard ON medicao_evento"
