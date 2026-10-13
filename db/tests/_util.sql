@@ -37,3 +37,16 @@ BEGIN
   END IF;
   RAISE NOTICE 'OK, confere | % = %', p_desc, p_esperado;
 END $$;
+
+-- Exige que uma consulta não devolva linha nenhuma; se devolver, mostra quais.
+-- Serve para as regras do tipo "nenhuma tabela pode estar sem proteção".
+CREATE OR REPLACE FUNCTION pg_temp.confere_vazio(p_desc text, p_consulta text)
+RETURNS void LANGUAGE plpgsql AS $$
+DECLARE v text;
+BEGIN
+  EXECUTE format('SELECT string_agg(x::text, '', '' ORDER BY x::text) FROM (%s) q(x)', p_consulta) INTO v;
+  IF v IS NOT NULL THEN
+    RAISE EXCEPTION 'TESTE FALHOU: "%" encontrou: %', p_desc, v;
+  END IF;
+  RAISE NOTICE 'OK, confere | % = nenhum', p_desc;
+END $$;
